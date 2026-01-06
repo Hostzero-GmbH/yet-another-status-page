@@ -199,7 +199,7 @@ export default function History() {
           <div className="flex items-center gap-3">
             <Link to="/">
               <img
-                src={resolvedTheme === "dark" ? logoDark : logoLight}
+                src={resolvedTheme === "dark" ? logoLight : logoDark}
                 alt="Hostzero"
                 className="h-10"
               />
