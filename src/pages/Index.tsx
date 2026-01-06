@@ -167,7 +167,7 @@ export default function Index() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <img
-              src={resolvedTheme === "dark" ? logoDark : logoLight}
+              src={resolvedTheme === "dark" ? logoLight : logoDark}
               alt="Hostzero"
               className="h-10"
             />
