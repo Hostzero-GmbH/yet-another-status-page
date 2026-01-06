@@ -167,9 +167,9 @@ export default function Index() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <img
-              src={resolvedTheme === "dark" ? logoLight : logoDark}
+              src={resolvedTheme === "dark" ? logoDark : logoLight}
               alt="Hostzero"
-              className="h-10"
+              className="h-10 transition-opacity duration-300"
             />
             <div className="h-6 w-px bg-border" />
             <p className="text-sm font-medium text-muted-foreground">System Status</p>
