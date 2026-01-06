@@ -224,10 +224,10 @@ export default function Index() {
           <IncidentTimeline days={pastIncidents} />
           <div className="mt-6 text-center">
             <a
-              href="#"
+              href="/history"
               className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
-              View incident history →
+              ← View incident history
             </a>
           </div>
         </section>
