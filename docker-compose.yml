@@ -1,0 +1,38 @@
+services:
+  app:
+    image: ghcr.io/hostzero-gmbh/status-page:latest
+    # Uncomment to build from source instead:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URI=postgres://hostzero:${POSTGRES_PASSWORD:-changeme}@db:5432/hostzero_status
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET:-change-this-to-a-random-32-char-string}
+      - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_SERVER_URL:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - uploads:/app/public/media
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=hostzero
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=hostzero_status
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hostzero -d hostzero_status"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads:

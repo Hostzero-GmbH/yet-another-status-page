@@ -1,0 +1,45 @@
+# Docker Compose configuration for E2E tests
+# Uses development mode for automatic schema creation
+
+services:
+  app:
+    image: node:22-alpine
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app:cached
+      - test_node_modules:/app/node_modules
+    working_dir: /app
+    environment:
+      - DATABASE_URI=postgresql://postgres:postgres@db:5432/hostzero_status_test
+      - PAYLOAD_SECRET=e2e-test-secret-key-32-characters
+      - NEXT_PUBLIC_SERVER_URL=http://localhost:3001
+      - NODE_ENV=development
+      # Allow unauthenticated writes for E2E tests
+      - PAYLOAD_PUBLIC_ALLOW_WRITES=true
+    command: sh -c "npm install && npm run dev -- --port 3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hostzero_status_test
+    # No volumes - fresh database each time
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hostzero_status_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  test_node_modules:

@@ -1,10 +1,15 @@
+"use client";
+
+import Link from "next/link";
 import { Wrench, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RichText } from "@/components/RichText";
 
 export interface MaintenanceItem {
   id: string;
+  shortId: string;
   title: string;
-  description: string;
+  description: unknown; // Lexical richText object
   scheduledAt: string;
   duration: string;
   affectedServices: string[];
@@ -24,14 +29,25 @@ export function MaintenanceCard({ maintenance }: MaintenanceCardProps) {
             <Wrench className="h-4 w-4 text-status-maintenance" />
           </div>
           <div className="flex flex-col gap-2">
-            <h4 className="font-semibold text-foreground">{maintenance.title}</h4>
-            <p className="text-sm text-muted-foreground">{maintenance.description}</p>
+            {maintenance.shortId ? (
+              <Link
+                href={`/m/${maintenance.shortId}`}
+                className="font-semibold text-foreground hover:text-primary transition-colors"
+              >
+                {maintenance.title}
+              </Link>
+            ) : (
+              <h4 className="font-semibold text-foreground">{maintenance.title}</h4>
+            )}
+            <div className="text-sm text-muted-foreground">
+              <RichText content={maintenance.description} />
+            </div>
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {maintenance.scheduledAt}
               </span>
-              <span>Duration: {maintenance.duration}</span>
+              {maintenance.duration && <span>Duration: {maintenance.duration}</span>}
             </div>
             {maintenance.affectedServices.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">

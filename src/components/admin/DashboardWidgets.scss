@@ -1,0 +1,135 @@
+.dashboard-widgets {
+  margin-bottom: 2rem;
+  padding: 0 1.5rem;
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--theme-elevation-800);
+  }
+
+  &__loading,
+  &__error {
+    padding: 1rem;
+    text-align: center;
+    color: var(--theme-elevation-500);
+    background: var(--theme-elevation-50);
+    border-radius: 8px;
+  }
+
+  &__error {
+    color: var(--theme-error-500);
+    background: var(--theme-error-50);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+}
+
+.dashboard-widget {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--theme-elevation-0);
+  border: 1px solid var(--theme-elevation-100);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--theme-elevation-200);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--theme-elevation-50);
+
+    svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--theme-elevation-600);
+    }
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--theme-elevation-900);
+  }
+
+  &__label {
+    font-size: 0.8125rem;
+    color: var(--theme-elevation-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Variant styles
+  &--incidents {
+    .dashboard-widget__icon {
+      background: rgba(239, 68, 68, 0.1);
+      svg { stroke: #ef4444; }
+    }
+    .dashboard-widget__value { color: #ef4444; }
+  }
+
+  &--maintenances {
+    .dashboard-widget__icon {
+      background: rgba(59, 130, 246, 0.1);
+      svg { stroke: #3b82f6; }
+    }
+  }
+
+  &--pending {
+    .dashboard-widget__icon {
+      background: rgba(245, 158, 11, 0.1);
+      svg { stroke: #f59e0b; }
+    }
+    .dashboard-widget__value { color: #f59e0b; }
+  }
+
+  &--scheduled {
+    .dashboard-widget__icon {
+      background: rgba(139, 92, 246, 0.1);
+      svg { stroke: #8b5cf6; }
+    }
+  }
+
+  &--email {
+    .dashboard-widget__icon {
+      background: rgba(16, 185, 129, 0.1);
+      svg { stroke: #10b981; }
+    }
+  }
+
+  &--sms {
+    .dashboard-widget__icon {
+      background: rgba(6, 182, 212, 0.1);
+      svg { stroke: #06b6d4; }
+    }
+  }
+}
+
+// Dark mode adjustments - Payload uses CSS variables that auto-adjust
+// so explicit dark mode overrides are not needed

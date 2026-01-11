@@ -1,73 +1,65 @@
-# Welcome to your Lovable project
+# Hostzero Status
 
-## Project info
+A modern, self-hosted status page built with [Payload CMS](https://payloadcms.com/) and [Next.js](https://nextjs.org/).
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[![Docker Build](https://github.com/Hostzero-GmbH/status-page/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Hostzero-GmbH/status-page/actions/workflows/docker-publish.yml)
+[![Documentation](https://github.com/Hostzero-GmbH/status-page/actions/workflows/docs.yml/badge.svg)](https://hostzero-gmbh.github.io/status-page)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **Incident Management** — Track and communicate service disruptions with timeline updates
+- **Scheduled Maintenance** — Plan and notify users about upcoming maintenance windows
+- **Email & SMS Notifications** — Automatic subscriber notifications via SMTP and Twilio
+- **Service Groups** — Organize services into logical groups
+- **Beautiful UI** — Modern, responsive status page with dark mode support
+- **Self-Hosted** — Full control over your data and infrastructure
+- **Docker Ready** — Easy deployment with Docker and Docker Compose
 
-**Use Lovable**
+## Quick Start
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+```bash
+# Clone the repository
+git clone https://github.com/Hostzero-GmbH/status-page.git
+cd status-page
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Start the services
+docker compose up -d
 ```
 
-**Edit a file directly in GitHub**
+Visit:
+- **Status Page**: http://localhost:3000
+- **Admin Panel**: http://localhost:3000/admin
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Documentation
 
-**Use GitHub Codespaces**
+📚 **[Full Documentation](https://hostzero-gmbh.github.io/status-page)**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- [Installation Guide](https://hostzero-gmbh.github.io/status-page/getting-started/installation/)
+- [Configuration](https://hostzero-gmbh.github.io/status-page/getting-started/configuration/)
+- [Admin Guide](https://hostzero-gmbh.github.io/status-page/admin/overview/)
+- [API Reference](https://hostzero-gmbh.github.io/status-page/api/rest/)
+- [Local Development](https://hostzero-gmbh.github.io/status-page/development/local-setup/)
 
-## What technologies are used for this project?
+## Tech Stack
 
-This project is built with:
+| Component | Technology |
+|-----------|------------|
+| Framework | [Next.js 15](https://nextjs.org/) (App Router) |
+| CMS | [Payload CMS 3.x](https://payloadcms.com/) |
+| Database | PostgreSQL |
+| Styling | Tailwind CSS |
+| Email | Nodemailer (SMTP) |
+| SMS | Twilio |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Contributing
 
-## How can I deploy this project?
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on development setup, coding standards, and the pull request process.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Security
 
-## Can I connect a custom domain to my Lovable project?
+For security concerns, please review our [Security Policy](SECURITY.md). Do not report security vulnerabilities through public GitHub issues.
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

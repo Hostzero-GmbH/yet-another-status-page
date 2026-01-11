@@ -1,0 +1,37 @@
+.recipient-count-field {
+  &__label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--theme-elevation-800);
+    margin-bottom: 0.5rem;
+  }
+
+  &__estimate {
+    font-weight: 400;
+    color: var(--theme-elevation-500);
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  &__value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--theme-elevation-900);
+    padding: 0.5rem 0;
+  }
+
+  &__loading {
+    color: var(--theme-elevation-500);
+  }
+
+  &__count {
+    color: var(--theme-success-500);
+  }
+
+  &__description {
+    font-size: 0.75rem;
+    color: var(--theme-elevation-500);
+    margin: 0;
+  }
+}

@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 
 export type ServiceStatus = "operational" | "degraded" | "partial" | "major" | "maintenance";

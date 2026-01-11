@@ -1,3 +1,5 @@
+"use client";
+
 import { CheckCircle2, AlertTriangle, AlertCircle, XCircle, Wrench } from "lucide-react";
 
 const legendItems = [
