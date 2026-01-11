@@ -37,6 +37,7 @@ export default tseslint.config(
       "*.config.js",
       "*.config.ts",
       "src/payload-types.ts",
+      "src/migrations/**",
       "docs/book/**",
       "playwright-report/**",
       "test-results/**",
