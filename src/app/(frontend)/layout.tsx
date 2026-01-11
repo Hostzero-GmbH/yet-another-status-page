@@ -4,6 +4,8 @@ import { getSettings } from '@/lib/payload'
 import { getMediaUrl } from '@/lib/utils'
 import './globals.css'
 
+export const dynamic = 'force-dynamic'
+
 function getMediaMimeType(media: number | Media | null | undefined): string | undefined {
   if (!media) return undefined
   if (typeof media === 'number') return undefined

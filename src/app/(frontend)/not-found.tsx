@@ -5,6 +5,8 @@ import { Header } from '@/components/status/Header'
 import { Footer } from '@/components/status/Footer'
 import { getMediaUrl } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 export default async function NotFound() {
   let siteName = 'Status'
   let footerText: unknown = null
