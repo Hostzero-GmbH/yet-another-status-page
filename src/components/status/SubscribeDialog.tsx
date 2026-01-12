@@ -172,9 +172,9 @@ export function SubscribeDialog({ isOpen, onClose }: SubscribeDialogProps) {
       />
 
       {/* Dialog */}
-      <div className="relative z-10 w-full max-w-lg animate-fade-in rounded-xl border border-border bg-card shadow-2xl">
+      <div className="relative z-10 mx-4 w-full max-w-lg animate-fade-in rounded-xl border border-border bg-card shadow-2xl sm:mx-0">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
           <h2 className="text-lg font-semibold text-foreground">Get status updates</h2>
           <button
             onClick={onClose}
@@ -191,7 +191,7 @@ export function SubscribeDialog({ isOpen, onClose }: SubscribeDialogProps) {
             <span className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
           </div>
         ) : neitherAvailable ? (
-          <div className="p-6">
+          <div className="p-5 sm:p-6">
             <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-4">
               <AlertCircle className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
               <div>
@@ -205,47 +205,85 @@ export function SubscribeDialog({ isOpen, onClose }: SubscribeDialogProps) {
             </div>
           </div>
         ) : (
-          <div className="flex">
-            {/* Sidebar tabs - only show if both are available */}
+          <div className="flex flex-col sm:flex-row">
+            {/* Tabs - horizontal on mobile, vertical sidebar on desktop */}
             {bothAvailable && (
-              <div className="flex w-40 flex-shrink-0 flex-col gap-1 border-r border-border bg-muted/30 p-3">
-                <button
-                  onClick={() => {
-                    setMethod("email");
-                    setErrors({});
-                    setSuccessMessage(null);
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all",
-                    method === "email"
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
-                  )}
-                >
-                  <Mail className="h-4 w-4" />
-                  Email
-                </button>
-                <button
-                  onClick={() => {
-                    setMethod("sms");
-                    setErrors({});
-                    setSuccessMessage(null);
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all",
-                    method === "sms"
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
-                  )}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  SMS
-                </button>
-              </div>
+              <>
+                {/* Mobile: horizontal tabs */}
+                <div className="flex gap-2 border-b border-border p-3 sm:hidden">
+                  <button
+                    onClick={() => {
+                      setMethod("email");
+                      setErrors({});
+                      setSuccessMessage(null);
+                    }}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                      method === "email"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    )}
+                  >
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMethod("sms");
+                      setErrors({});
+                      setSuccessMessage(null);
+                    }}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                      method === "sms"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    )}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    SMS
+                  </button>
+                </div>
+                {/* Desktop: vertical sidebar */}
+                <div className="hidden w-40 flex-shrink-0 flex-col gap-1 border-r border-border bg-muted/30 p-3 sm:flex">
+                  <button
+                    onClick={() => {
+                      setMethod("email");
+                      setErrors({});
+                      setSuccessMessage(null);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all",
+                      method === "email"
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
+                    )}
+                  >
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMethod("sms");
+                      setErrors({});
+                      setSuccessMessage(null);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all",
+                      method === "sms"
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
+                    )}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    SMS
+                  </button>
+                </div>
+              </>
             )}
 
             {/* Form area */}
-            <form onSubmit={handleSubmit} className="flex-1 p-6">
+            <form onSubmit={handleSubmit} className="flex-1 p-5 sm:p-6">
               {successMessage ? (
                 <div className="flex items-center gap-3 rounded-lg bg-status-operational/10 p-4 text-status-operational">
                   <Bell className="h-5 w-5" />
