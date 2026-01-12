@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { Setting } from '@/payload-types'
+import type { EmailSetting, SmsSetting } from '@/payload-types'
 
 // Rate limit configuration: 5 subscription attempts per IP per hour
 const RATE_LIMIT_MAX = 5
 const RATE_LIMIT_WINDOW_HOURS = 1
 
-function isSmtpConfigured(settings: Setting): boolean {
+function isEmailConfigured(emailSettings: EmailSetting): boolean {
   return Boolean(
-    settings.smtpHost &&
-    settings.smtpFromAddress &&
-    settings.emailNotificationsEnabled
+    emailSettings.smtpHost &&
+    emailSettings.smtpFromAddress &&
+    emailSettings.enabled
   )
 }
 
-function isSmsConfigured(settings: Setting): boolean {
+function isSmsConfigured(smsSettings: SmsSetting): boolean {
   return Boolean(
-    settings.twilioAccountSid &&
-    settings.twilioAuthToken &&
-    settings.twilioFromNumber &&
-    settings.smsNotificationsEnabled
+    smsSettings.twilioAccountSid &&
+    smsSettings.twilioAuthToken &&
+    (smsSettings.twilioFromNumber || smsSettings.twilioMessagingServiceSid) &&
+    smsSettings.enabled
   )
 }
 
@@ -111,14 +111,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch settings to check if notifications are enabled
-    const settings = await payload.findGlobal({
-      slug: 'settings',
-    }) as Setting
+    // Fetch email and SMS settings
+    const emailSettings = await payload.findGlobal({
+      slug: 'email-settings',
+    }) as EmailSetting
+    const smsSettings = await payload.findGlobal({
+      slug: 'sms-settings',
+    }) as SmsSetting
 
     if (type === 'email') {
       // Check if SMTP is configured
-      if (!isSmtpConfigured(settings)) {
+      if (!isEmailConfigured(emailSettings)) {
         return NextResponse.json(
           { error: 'Email notifications are not available. Please contact the administrator.' },
           { status: 503 }
@@ -165,7 +168,7 @@ export async function POST(request: NextRequest) {
       })
     } else if (type === 'sms') {
       // Check if SMS is configured
-      if (!isSmsConfigured(settings)) {
+      if (!isSmsConfigured(smsSettings)) {
         return NextResponse.json(
           { error: 'SMS notifications are not available. Please contact the administrator.' },
           { status: 503 }
@@ -229,13 +232,16 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const payload = await getPayload({ config })
-    const settings = await payload.findGlobal({
-      slug: 'settings',
-    }) as Setting
+    const emailSettings = await payload.findGlobal({
+      slug: 'email-settings',
+    }) as EmailSetting
+    const smsSettings = await payload.findGlobal({
+      slug: 'sms-settings',
+    }) as SmsSetting
 
     return NextResponse.json({
-      email: isSmtpConfigured(settings),
-      sms: isSmsConfigured(settings),
+      email: isEmailConfigured(emailSettings),
+      sms: isSmsConfigured(smsSettings),
     })
   } catch (error) {
     console.error('Error checking subscription availability:', error)

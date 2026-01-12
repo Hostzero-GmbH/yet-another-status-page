@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import type { Setting } from '@/payload-types'
+import type { EmailSetting } from '@/payload-types'
 
 interface EmailOptions {
   to: string
@@ -15,23 +15,23 @@ interface EmailResult {
   error?: string
 }
 
-export async function createTransporter(settings: Setting) {
-  if (!settings.smtpHost || !settings.smtpFromAddress) {
+export async function createTransporter(emailSettings: EmailSetting) {
+  if (!emailSettings.smtpHost || !emailSettings.smtpFromAddress) {
     throw new Error('SMTP not configured: missing host or from address')
   }
 
-  const secure = settings.smtpSecure === 'ssl'
-  const port = settings.smtpPort || (secure ? 465 : 587)
+  const secure = emailSettings.smtpSecure === 'ssl'
+  const port = emailSettings.smtpPort || (secure ? 465 : 587)
 
   return nodemailer.createTransport({
-    host: settings.smtpHost,
+    host: emailSettings.smtpHost,
     port,
     secure,
-    auth: settings.smtpUsername ? {
-      user: settings.smtpUsername,
-      pass: settings.smtpPassword || '',
+    auth: emailSettings.smtpUsername ? {
+      user: emailSettings.smtpUsername,
+      pass: emailSettings.smtpPassword || '',
     } : undefined,
-    tls: settings.smtpSecure === 'tls' ? {
+    tls: emailSettings.smtpSecure === 'tls' ? {
       // In production, consider setting this to true for security
       rejectUnauthorized: process.env.NODE_ENV === 'production',
     } : undefined,
@@ -39,14 +39,14 @@ export async function createTransporter(settings: Setting) {
 }
 
 export async function sendEmail(
-  settings: Setting,
+  emailSettings: EmailSetting,
   options: EmailOptions
 ): Promise<EmailResult> {
   try {
-    const transporter = await createTransporter(settings)
+    const transporter = await createTransporter(emailSettings)
 
-    const fromName = settings.smtpFromName || settings.siteName || 'Status Page'
-    const from = `"${fromName}" <${settings.smtpFromAddress}>`
+    const fromName = emailSettings.smtpFromName || 'Status Page'
+    const from = `"${fromName}" <${emailSettings.smtpFromAddress}>`
 
     const headers: Record<string, string> = {}
     
@@ -59,7 +59,7 @@ export async function sendEmail(
     const result = await transporter.sendMail({
       from,
       to: options.to,
-      replyTo: settings.smtpReplyTo || settings.smtpFromAddress || undefined,
+      replyTo: emailSettings.smtpReplyTo || emailSettings.smtpFromAddress || undefined,
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, ''),
@@ -80,11 +80,11 @@ export async function sendEmail(
 }
 
 export async function sendBulkEmails(
-  settings: Setting,
+  emailSettings: EmailSetting,
   emails: EmailOptions[]
 ): Promise<{ sent: number; failed: number; errors: string[] }> {
   const results = await Promise.all(
-    emails.map((email) => sendEmail(settings, email))
+    emails.map((email) => sendEmail(emailSettings, email))
   )
 
   const sent = results.filter((r) => r.success).length

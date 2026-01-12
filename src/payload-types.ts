@@ -103,9 +103,13 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     settings: Setting;
+    'email-settings': EmailSetting;
+    'sms-settings': SmsSetting;
   };
   globalsSelect: {
     settings: SettingsSelect<false> | SettingsSelect<true>;
+    'email-settings': EmailSettingsSelect<false> | EmailSettingsSelect<true>;
+    'sms-settings': SmsSettingsSelect<false> | SmsSettingsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -909,8 +913,21 @@ export interface Setting {
    * Override the default status banner message (leave empty to use automatic)
    */
   customStatusMessage?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-settings".
+ */
+export interface EmailSetting {
+  id: number;
   /**
-   * Required. SMTP server hostname (e.g., smtp.gmail.com, smtp.sendgrid.net)
+   * Allow users to subscribe via email (requires SMTP to be configured)
+   */
+  enabled?: boolean | null;
+  /**
+   * SMTP server hostname (e.g., smtp.gmail.com, smtp.sendgrid.net)
    */
   smtpHost?: string | null;
   /**
@@ -930,7 +947,7 @@ export interface Setting {
    */
   smtpPassword?: string | null;
   /**
-   * Required. Email address that notifications will be sent from
+   * Email address that notifications will be sent from
    */
   smtpFromAddress?: string | null;
   /**
@@ -941,30 +958,59 @@ export interface Setting {
    * Optional reply-to email address (leave empty to use From address)
    */
   smtpReplyTo?: string | null;
-  /**
-   * Required. Your Twilio Account SID (starts with AC...)
-   */
-  twilioAccountSid?: string | null;
-  /**
-   * Required. Your Twilio Auth Token. Leave empty to keep existing value.
-   */
-  twilioAuthToken?: string | null;
-  /**
-   * Required. Your Twilio phone number (e.g., +1234567890)
-   */
-  twilioFromNumber?: string | null;
-  /**
-   * Optional. Use a Messaging Service instead of a single phone number for better deliverability
-   */
-  twilioMessagingServiceSid?: string | null;
-  /**
-   * Allow users to subscribe via email (requires SMTP to be configured)
-   */
-  emailNotificationsEnabled?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-settings".
+ */
+export interface SmsSetting {
+  id: number;
   /**
    * Allow users to subscribe via SMS (requires Twilio to be configured)
    */
-  smsNotificationsEnabled?: boolean | null;
+  enabled?: boolean | null;
+  /**
+   * Your Twilio Account SID (starts with AC...)
+   */
+  twilioAccountSid?: string | null;
+  /**
+   * Your Twilio Auth Token. Leave empty to keep existing value.
+   */
+  twilioAuthToken?: string | null;
+  /**
+   * Your Twilio phone number (e.g., +1234567890). Required if not using a Messaging Service.
+   */
+  twilioFromNumber?: string | null;
+  /**
+   * Use a Messaging Service instead of a phone number for better deliverability. Required if not using a From Phone Number.
+   */
+  twilioMessagingServiceSid?: string | null;
+  /**
+   * Maximum characters for {{title}} placeholder. Longer titles will be truncated.
+   */
+  templateTitleMaxLength?: number | null;
+  /**
+   * Maximum characters for {{message}} placeholder. Longer messages will be truncated.
+   */
+  templateMessageMaxLength?: number | null;
+  /**
+   * Template for new incident notifications
+   */
+  templateIncidentNew?: string | null;
+  /**
+   * Template for incident update notifications
+   */
+  templateIncidentUpdate?: string | null;
+  /**
+   * Template for new scheduled maintenance notifications. {{schedule}} includes start/end times.
+   */
+  templateMaintenanceNew?: string | null;
+  /**
+   * Template for maintenance update notifications
+   */
+  templateMaintenanceUpdate?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -985,6 +1031,16 @@ export interface SettingsSelect<T extends boolean = true> {
   logoDark?: T;
   maintenanceModeEnabled?: T;
   customStatusMessage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-settings_select".
+ */
+export interface EmailSettingsSelect<T extends boolean = true> {
+  enabled?: T;
   smtpHost?: T;
   smtpPort?: T;
   smtpSecure?: T;
@@ -993,12 +1049,26 @@ export interface SettingsSelect<T extends boolean = true> {
   smtpFromAddress?: T;
   smtpFromName?: T;
   smtpReplyTo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-settings_select".
+ */
+export interface SmsSettingsSelect<T extends boolean = true> {
+  enabled?: T;
   twilioAccountSid?: T;
   twilioAuthToken?: T;
   twilioFromNumber?: T;
   twilioMessagingServiceSid?: T;
-  emailNotificationsEnabled?: T;
-  smsNotificationsEnabled?: T;
+  templateTitleMaxLength?: T;
+  templateMessageMaxLength?: T;
+  templateIncidentNew?: T;
+  templateIncidentUpdate?: T;
+  templateMaintenanceNew?: T;
+  templateMaintenanceUpdate?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -49,6 +49,11 @@ interface DeferredNotification {
   message?: string
 }
 
+// Helper to interpolate template placeholders
+function interpolateTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || '')
+}
+
 // Helper to create notification drafts for maintenances (deferred execution)
 async function createMaintenanceNotificationDeferred(data: DeferredNotification) {
   try {
@@ -57,28 +62,59 @@ async function createMaintenanceNotificationDeferred(data: DeferredNotification)
     const config = (await import('@payload-config')).default
     const payload = await getPayload({ config })
     
+    // Fetch settings
+    const settings = await payload.findGlobal({ slug: 'settings' })
+    const smsSettings = await payload.findGlobal({ slug: 'sms-settings' })
+    const siteName = settings.siteName || 'Status'
+    const siteUrl = process.env.SERVER_URL || ''
+    
+    // Get max lengths from SMS settings
+    const titleMaxLength = smsSettings.templateTitleMaxLength || 50
+    const messageMaxLength = smsSettings.templateMessageMaxLength || 100
+    
     // Build schedule string for SMS (no newlines)
     let scheduleStr = ''
     if (data.startTimeStr && data.endTimeStr) {
-      scheduleStr = ` | 📅 ${data.startTimeStr} - ${data.endTimeStr}`
+      scheduleStr = `📅 ${data.startTimeStr} - ${data.endTimeStr}`
     } else if (data.startTimeStr) {
-      scheduleStr = ` | 📅 ${data.startTimeStr}`
+      scheduleStr = `📅 ${data.startTimeStr}`
       if (data.duration) {
         scheduleStr += ` (${data.duration})`
       }
     }
     
+    // Truncate title and message for SMS
+    const truncatedTitle = data.title.length > titleMaxLength
+      ? data.title.substring(0, titleMaxLength - 3) + '...'
+      : data.title
+    
     const truncatedMessage = data.message 
-      ? (data.message.length > 100 ? data.message.substring(0, 97) + '...' : data.message)
+      ? (data.message.length > messageMaxLength ? data.message.substring(0, messageMaxLength - 3) + '...' : data.message)
       : ''
     
-    const smsBody = data.isUpdate
-      ? `🔧 ${data.title} | ${data.statusLabel}${scheduleStr}${truncatedMessage ? ` | ${truncatedMessage}` : ''} | {{siteUrl}}/m/${data.shortId}`
-      : `🔧 MAINTENANCE: ${data.title}${scheduleStr} | {{siteUrl}}/m/${data.shortId}`
+    const url = `${siteUrl}/m/${data.shortId}`
+    
+    const templateVars = {
+      siteName,
+      title: truncatedTitle,
+      status: data.statusLabel,
+      schedule: scheduleStr,
+      message: truncatedMessage,
+      url,
+    }
+    
+    let smsBody: string
+    if (data.isUpdate) {
+      const template = smsSettings.templateMaintenanceUpdate || '[{{siteName}}] 🔧 {{title}} | {{status}} | {{schedule}} | {{message}} | {{url}}'
+      smsBody = interpolateTemplate(template, templateVars)
+    } else {
+      const template = smsSettings.templateMaintenanceNew || '[{{siteName}}] 🔧 MAINTENANCE: {{title}} | {{schedule}} | {{url}}'
+      smsBody = interpolateTemplate(template, templateVars)
+    }
     
     const emailBody = data.isUpdate
-      ? `Maintenance Status: ${data.statusLabel}\n\n${data.message || ''}\n\nView full details: {{siteUrl}}/m/${data.shortId}`
-      : `A maintenance window has been scheduled.\n\nScheduled Start: ${data.startTimeStr || 'TBD'}\n${data.endTimeStr ? `Scheduled End: ${data.endTimeStr}\n` : ''}${data.duration ? `Expected Duration: ${data.duration}\n` : ''}\nWe will notify you when the maintenance begins and completes.\n\nView full details: {{siteUrl}}/m/${data.shortId}`
+      ? `Maintenance Status: ${data.statusLabel}\n\n${data.message || ''}\n\nView full details: ${url}`
+      : `A maintenance window has been scheduled.\n\nScheduled Start: ${data.startTimeStr || 'TBD'}\n${data.endTimeStr ? `Scheduled End: ${data.endTimeStr}\n` : ''}${data.duration ? `Expected Duration: ${data.duration}\n` : ''}\nWe will notify you when the maintenance begins and completes.\n\nView full details: ${url}`
     
     const notification = await payload.create({
       collection: 'notifications',

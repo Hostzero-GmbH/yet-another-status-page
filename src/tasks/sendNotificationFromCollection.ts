@@ -1,7 +1,7 @@
 import type { BasePayload } from 'payload'
 import { sendBulkEmails, generateEmailHtml } from '@/lib/email'
 import { sendBulkSms, formatSmsMessage } from '@/lib/sms'
-import type { Setting, Subscriber, Media } from '@/payload-types'
+import type { Setting, EmailSetting, SmsSetting, Subscriber, Media } from '@/payload-types'
 
 export interface SendNotificationFromCollectionInput {
   notificationId: string
@@ -32,13 +32,21 @@ export async function sendNotificationFromCollectionHandler({ input, req }: Task
     itemUrl,
   } = input
 
-  // Fetch settings with depth to get media objects
+  // Fetch settings
   const settings = await payload.findGlobal({
     slug: 'settings',
     depth: 1,
   }) as Setting
+  
+  const emailSettings = await payload.findGlobal({
+    slug: 'email-settings',
+  }) as EmailSetting
+  
+  const smsSettings = await payload.findGlobal({
+    slug: 'sms-settings',
+  }) as SmsSetting
 
-  const siteUrl = process.env.SERVER_URL || 'https://status.example.com'
+  const siteUrl = process.env.SERVER_URL!
   const siteName = settings.siteName || 'Status Page'
   
   // Get logo URL for emails (use light logo since email backgrounds are white)
@@ -91,7 +99,7 @@ export async function sendNotificationFromCollectionHandler({ input, req }: Task
 
   // Send emails
   if ((channel === 'email' || channel === 'both') && emailSubscribers.length > 0) {
-    if (!settings.smtpHost || !settings.smtpFromAddress) {
+    if (!emailSettings.smtpHost || !emailSettings.smtpFromAddress) {
       errors.push('SMTP not configured')
     } else {
       const emails = emailSubscribers.map((subscriber) => {
@@ -99,13 +107,10 @@ export async function sendNotificationFromCollectionHandler({ input, req }: Task
           ? `${siteUrl}/unsubscribe/${subscriber.unsubscribeToken}`
           : `${siteUrl}/unsubscribe`
 
-        // Replace {{siteUrl}} placeholder in email body
-        const processedBody = (emailBody || '').replace(/\{\{siteUrl\}\}/g, siteUrl)
-
         const html = generateEmailHtml({
           siteName,
           title: subject || itemTitle || 'Status Update',
-          body: processedBody,
+          body: emailBody || '',
           ctaText: 'View Status',
           ctaUrl: itemUrl,
           unsubscribeUrl,
@@ -121,7 +126,7 @@ export async function sendNotificationFromCollectionHandler({ input, req }: Task
         }
       })
 
-      const result = await sendBulkEmails(settings, emails)
+      const result = await sendBulkEmails(emailSettings, emails)
       emailsSent = result.sent
       if (result.failed > 0) {
         errors.push(`${result.failed} email(s) failed: ${result.errors.slice(0, 3).join(', ')}`)
@@ -131,20 +136,15 @@ export async function sendNotificationFromCollectionHandler({ input, req }: Task
 
   // Send SMS
   if ((channel === 'sms' || channel === 'both') && smsSubscribers.length > 0) {
-    if (!settings.twilioAccountSid || !settings.twilioAuthToken || !settings.twilioFromNumber) {
+    if (!smsSettings.twilioAccountSid || !smsSettings.twilioAuthToken || (!smsSettings.twilioFromNumber && !smsSettings.twilioMessagingServiceSid)) {
       errors.push('Twilio not configured')
     } else {
       const messages = smsSubscribers.map((subscriber) => ({
         to: subscriber.phone!,
-        body: formatSmsMessage({
-          siteName,
-          title: itemTitle || 'Status Update',
-          body: smsBody || '',
-          url: itemUrl,
-        }),
+        body: formatSmsMessage(smsBody || ''),
       }))
 
-      const result = await sendBulkSms(settings, messages)
+      const result = await sendBulkSms(smsSettings, messages)
       smsSent = result.sent
       if (result.failed > 0) {
         errors.push(`${result.failed} SMS failed: ${result.errors.slice(0, 3).join(', ')}`)

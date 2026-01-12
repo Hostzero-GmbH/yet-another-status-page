@@ -113,20 +113,26 @@ OIDC_DISABLE_LOCAL_LOGIN=true
 
 ## Admin Panel Settings
 
-Access **Configuration → Site Settings** in the admin panel to configure:
+The admin panel has three configuration sections under **Configuration**:
 
-### General Settings
+### Site Settings
+
+Access **Configuration → Site Settings** to configure:
 
 - **Site Name**: Displayed in the header and emails
 - **Site Description**: Meta description for SEO
 - **Favicon**: Custom favicon for your status page
+- **Logos**: Light and dark theme logos
+- **SEO**: Meta titles and descriptions
+- **Status Override**: Maintenance mode and custom messages
 
-### Email Notifications (SMTP)
+### Email Settings
 
-Configure these to enable email notifications:
+Access **Configuration → Email Settings** to configure email notifications:
 
 | Setting | Description |
 |---------|-------------|
+| Enable Email Subscriptions | Allow users to subscribe via email |
 | SMTP Host | Your mail server hostname |
 | SMTP Port | Usually 587 (TLS) or 465 (SSL) |
 | SMTP Security | None, TLS, or SSL |
@@ -136,15 +142,38 @@ Configure these to enable email notifications:
 | From Name | Sender display name |
 | Reply-To | Reply-to address (optional) |
 
-### SMS Notifications (Twilio)
+### SMS Settings
 
-Configure these to enable SMS notifications:
+Access **Configuration → SMS Settings** to configure SMS notifications:
 
 | Setting | Description |
 |---------|-------------|
+| Enable SMS Subscriptions | Allow users to subscribe via SMS |
 | Account SID | Your Twilio Account SID |
 | Auth Token | Your Twilio Auth Token |
-| From Number | Your Twilio phone number |
+| From Number | Your Twilio phone number (required if not using Messaging Service) |
+| Messaging Service SID | Alternative to From Number for better deliverability |
+
+#### SMS Templates
+
+You can customize the SMS message templates with these placeholders:
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{siteName}}` | Your site name from Site Settings |
+| `{{title}}` | Incident or maintenance title |
+| `{{status}}` | Current status (e.g., Investigating, Resolved) |
+| `{{message}}` | Update message content |
+| `{{schedule}}` | Maintenance schedule (maintenance only) |
+| `{{url}}` | Link to the incident/maintenance page |
+
+Available templates:
+- **New Incident Template** - For initial incident notifications
+- **Incident Update Template** - For incident status updates
+- **New Maintenance Template** - For scheduled maintenance announcements
+- **Maintenance Update Template** - For maintenance status updates
+
+You can also configure **Title Max Length** and **Message Max Length** to control truncation.
 
 ## Testing Notifications
 

@@ -59,16 +59,12 @@ test.describe('Status Page', () => {
   test('shows status legend', async ({ page }) => {
     await page.goto('/')
     
-    // Status legend items - use locators that match the legend section
-    const legend = page.locator('.flex.flex-wrap.items-center.justify-center')
-    await expect(legend).toBeVisible()
-    
-    // Check for legend labels
-    await expect(legend.getByText('Operational')).toBeVisible()
-    await expect(legend.getByText('Degraded Performance')).toBeVisible()
-    await expect(legend.getByText('Partial Outage')).toBeVisible()
-    await expect(legend.getByText('Major Outage')).toBeVisible()
-    await expect(legend.getByText('Maintenance')).toBeVisible()
+    // Check for legend labels (grid on mobile, flex on desktop)
+    await expect(page.getByText('Operational').first()).toBeVisible()
+    await expect(page.getByText('Degraded Performance').first()).toBeVisible()
+    await expect(page.getByText('Partial Outage').first()).toBeVisible()
+    await expect(page.getByText('Major Outage').first()).toBeVisible()
+    await expect(page.getByText('Maintenance').first()).toBeVisible()
   })
 })
 
@@ -157,7 +153,7 @@ test.describe('Status Page - Responsive Design', () => {
     const statusBanner = page.locator('.rounded-lg.px-6.py-4')
     await expect(statusBanner).toBeVisible()
     
-    // Subscribe button should show shorter text on mobile
-    await expect(page.getByRole('button', { name: /Subscribe/i })).toBeVisible()
+    // Subscribe button should be visible (icon-only on mobile, uses aria-label)
+    await expect(page.getByLabel('Subscribe to updates')).toBeVisible()
   })
 })

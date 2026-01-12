@@ -22,6 +22,11 @@ interface DeferredNotification {
   message: string
 }
 
+// Helper to interpolate template placeholders
+function interpolateTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || '')
+}
+
 // Helper to create notification drafts for incidents (deferred execution)
 async function createIncidentNotificationDeferred(data: DeferredNotification) {
   try {
@@ -30,22 +35,48 @@ async function createIncidentNotificationDeferred(data: DeferredNotification) {
     const config = (await import('@payload-config')).default
     const payload = await getPayload({ config })
     
-    // Truncate message for SMS
-    const truncatedMessage = data.message.length > 150 
-      ? data.message.substring(0, 147) + '...' 
+    // Fetch settings
+    const settings = await payload.findGlobal({ slug: 'settings' })
+    const smsSettings = await payload.findGlobal({ slug: 'sms-settings' })
+    const siteName = settings.siteName || 'Status'
+    const siteUrl = process.env.SERVER_URL || ''
+    
+    // Get max lengths from SMS settings
+    const titleMaxLength = smsSettings.templateTitleMaxLength || 50
+    const messageMaxLength = smsSettings.templateMessageMaxLength || 100
+    
+    // Truncate title and message for SMS
+    const truncatedTitle = data.title.length > titleMaxLength
+      ? data.title.substring(0, titleMaxLength - 3) + '...'
+      : data.title
+    
+    const truncatedMessage = data.message.length > messageMaxLength 
+      ? data.message.substring(0, messageMaxLength - 3) + '...' 
       : data.message
+    
+    const url = `${siteUrl}/i/${data.shortId}`
+    
+    const templateVars = {
+      siteName,
+      title: truncatedTitle,
+      status: data.statusLabel,
+      message: truncatedMessage,
+      url,
+    }
     
     let smsBody: string
     let emailBody: string
     
     if (data.isInitial) {
       // Initial incident notification (from first update)
-      smsBody = `🚨 INCIDENT: ${data.title} | ${data.statusLabel} | ${truncatedMessage} | {{siteUrl}}/i/${data.shortId}`
-      emailBody = `A new incident has been reported.\n\nStatus: ${data.statusLabel}\n\n${data.message}\n\nView full details: {{siteUrl}}/i/${data.shortId}`
+      const template = smsSettings.templateIncidentNew || '[{{siteName}}] 🚨 INCIDENT: {{title}} | {{status}} | {{message}} | {{url}}'
+      smsBody = interpolateTemplate(template, templateVars)
+      emailBody = `A new incident has been reported.\n\nStatus: ${data.statusLabel}\n\n${data.message}\n\nView full details: ${url}`
     } else {
       // Subsequent update notification
-      smsBody = `📢 ${data.title} | ${data.statusLabel} | ${truncatedMessage} | {{siteUrl}}/i/${data.shortId}`
-      emailBody = `Status: ${data.statusLabel}\n\n${data.message}\n\nView full details: {{siteUrl}}/i/${data.shortId}`
+      const template = smsSettings.templateIncidentUpdate || '[{{siteName}}] 📢 {{title}} | {{status}} | {{message}} | {{url}}'
+      smsBody = interpolateTemplate(template, templateVars)
+      emailBody = `Status: ${data.statusLabel}\n\n${data.message}\n\nView full details: ${url}`
     }
     
     const notification = await payload.create({

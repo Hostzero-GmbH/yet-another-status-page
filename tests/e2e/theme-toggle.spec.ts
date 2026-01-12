@@ -51,8 +51,10 @@ test.describe('Theme Toggle', () => {
     // Reload page
     await page.reload()
     
-    // Wait for page to load
-    await page.waitForSelector('button')
+    // Wait for theme toggle to hydrate - the aria-label indicates the current state
+    // If we toggled to dark (!initiallyDark === true), button should say "Switch to light theme"
+    const expectedLabel = !initiallyDark ? /Switch to light theme/i : /Switch to dark theme/i
+    await expect(page.getByRole('button', { name: expectedLabel })).toBeVisible()
     
     // Theme should persist
     const afterReload = await html.evaluate(el => el.classList.contains('dark'))

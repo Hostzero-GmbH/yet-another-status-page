@@ -1,6 +1,15 @@
 import { buildConfig, Plugin } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
-import { lexicalEditor, FixedToolbarFeature } from '@payloadcms/richtext-lexical'
+import {
+  lexicalEditor,
+  FixedToolbarFeature,
+  BoldFeature,
+  ItalicFeature,
+  UnderlineFeature,
+  StrikethroughFeature,
+  LinkFeature,
+  ParagraphFeature,
+} from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -17,7 +26,7 @@ import {
 } from '@/collections'
 
 // Globals
-import { Settings } from '@/globals'
+import { Settings, EmailSettings, SmsSettings } from '@/globals'
 
 // Tasks
 import { sendNotificationFromCollectionHandler } from '@/tasks/sendNotificationFromCollection'
@@ -64,15 +73,18 @@ export default buildConfig({
     Users,
     Media,
   ],
-  globals: [Settings],
+  globals: [Settings, EmailSettings, SmsSettings],
   plugins,
   editor: lexicalEditor({
-    features: ({ defaultFeatures }) => {
-      // Only keep essential formatting features
-      const allowedKeys = ['paragraph', 'bold', 'italic', 'underline', 'strikethrough', 'link']
-      const filtered = defaultFeatures.filter((f) => allowedKeys.includes(f.key))
-      return [...filtered, FixedToolbarFeature()]
-    },
+    features: () => [
+      ParagraphFeature(),
+      BoldFeature(),
+      ItalicFeature(),
+      UnderlineFeature(),
+      StrikethroughFeature(),
+      LinkFeature(),
+      FixedToolbarFeature(),
+    ],
   }),
   secret: process.env.PAYLOAD_SECRET || 'default-secret-change-me',
   typescript: {

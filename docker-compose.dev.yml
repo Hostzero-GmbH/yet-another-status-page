@@ -15,6 +15,7 @@ services:
       - DATABASE_URI=postgresql://postgres:postgres@postgres:5432/hostzero_status
       - PAYLOAD_SECRET=dev-secret-key-change-in-production
       - SERVER_URL=http://localhost:3333
+      - DEBUG=twilio:*
 
   postgres:
     image: postgres:18-alpine

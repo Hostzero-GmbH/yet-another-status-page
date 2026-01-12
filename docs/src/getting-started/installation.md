@@ -75,15 +75,13 @@ npm start
    
    On first access, you'll be prompted to create an admin account.
 
-3. **Configure Site Settings**
+3. **Configure Settings**
    
-   Go to **Configuration → Site Settings** and configure:
+   Configure your status page in the admin panel:
    
-   - Site Name
-   - Site Description
-   - Favicon
-   - SMTP settings (for email notifications)
-   - Twilio settings (for SMS notifications)
+   - **Configuration → Site Settings**: Site name, description, favicon, logos
+   - **Configuration → Email Settings**: SMTP settings for email notifications
+   - **Configuration → SMS Settings**: Twilio settings for SMS notifications
 
 4. **Add Services**
    

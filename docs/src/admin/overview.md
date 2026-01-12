@@ -36,7 +36,9 @@ The admin panel is organized into sections:
 
 ### Configuration
 
-- **Site Settings** - Global configuration
+- **Site Settings** - Site name, branding, SEO, status overrides
+- **Email Settings** - SMTP configuration and email subscriptions
+- **SMS Settings** - Twilio configuration, SMS subscriptions, and message templates
 
 ## Workflow Overview
 

@@ -29,19 +29,9 @@ PAYLOAD_SECRET=your-32-character-secret-key-here
 
 # URLs
 SERVER_URL=https://status.yourdomain.com
-
-# Optional: Email Notifications (SMTP)
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your-smtp-user
-SMTP_PASS=your-smtp-password
-SMTP_FROM=status@yourdomain.com
-
-# Optional: SMS Notifications (Twilio)
-TWILIO_ACCOUNT_SID=your-account-sid
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_FROM_NUMBER=+1234567890
 ```
+
+> **Note**: Email (SMTP) and SMS (Twilio) settings are configured via the admin panel under **Configuration → Email Settings** and **Configuration → SMS Settings**, not through environment variables.
 
 ### 3. Start the Services
 

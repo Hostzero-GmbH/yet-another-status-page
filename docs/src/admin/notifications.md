@@ -69,8 +69,9 @@ Emails automatically include:
 
 ### Configuration
 
-Configure SMTP in **Configuration → Site Settings**:
+Configure SMTP in **Configuration → Email Settings**:
 
+- Enable Email Subscriptions toggle
 - SMTP Host, Port, Security
 - Authentication credentials
 - From address and name
@@ -79,8 +80,9 @@ Configure SMTP in **Configuration → Site Settings**:
 
 ### Content
 
-SMS messages are optimized for ~300 characters and include:
+SMS messages are generated from customizable templates and include:
 
+- Site name prefix
 - Emoji indicator (🚨 incident, 🔧 maintenance)
 - Title and status
 - Scheduled times (for maintenance)
@@ -88,11 +90,25 @@ SMS messages are optimized for ~300 characters and include:
 
 ### Configuration
 
-Configure Twilio in **Configuration → Site Settings**:
+Configure Twilio in **Configuration → SMS Settings**:
 
+- Enable SMS Subscriptions toggle
 - Account SID
 - Auth Token
-- From phone number
+- From phone number OR Messaging Service SID
+
+### SMS Templates
+
+You can customize SMS message templates in **Configuration → SMS Settings** under the "SMS Templates" section. Available placeholders:
+
+- `{{siteName}}` - Your site name
+- `{{title}}` - Incident/maintenance title
+- `{{status}}` - Current status
+- `{{message}}` - Update message
+- `{{schedule}}` - Maintenance schedule
+- `{{url}}` - Link to the page
+
+Configure **Title Max Length** and **Message Max Length** to control how content is truncated to fit SMS limits.
 
 ## Recipient Count
 
