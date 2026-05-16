@@ -63,7 +63,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "playwright": "^1.57.0",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.52.0",
     "yaml": "^2.8.2"
