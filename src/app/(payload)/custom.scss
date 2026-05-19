@@ -1,1 +1,38 @@
 /* Custom styles for Payload Admin */
+
+/* Fix login page theme - light mode (default) */
+.template-minimal {
+  .login__form {
+    button[type="submit"] {
+      min-height: 36 !important;
+      margin-top: 24px !important;
+    }
+  }
+}
+
+/* Fix login page theme - dark mode */
+@media (prefers-color-scheme: dark) {
+  .template-minimal {
+    background-color: var(--theme-elevation-0, #1a1a1a);
+
+    .login__brand {
+      svg path {
+        fill: var(--theme-elevation-1000, #ffffff);
+      }
+    }
+
+    .login__form {
+      button[type="submit"] {
+        background-color: #ebebeb;
+        span {
+          color: #1a1a1a !important;
+        }
+        &:hover {
+          span {
+            color: #1a1a1a !important;
+          }
+        }
+      }
+    }
+  }
+}

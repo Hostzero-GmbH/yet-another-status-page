@@ -6,6 +6,7 @@ import { getMediaUrl } from '@/lib/utils'
 import { Header } from '@/components/status/Header'
 import { Footer } from '@/components/status/Footer'
 import { Subscribe } from '@/components/status/SubscribeDialog'
+import { LoginButton } from '@/components/status/LoginButton'
 import { StatusBanner } from '@/components/status/StatusBanner'
 import { ServiceGroup } from '@/components/status/ServiceGroup'
 import { MaintenanceCard } from '@/components/status/MaintenanceCard'
@@ -254,6 +255,7 @@ export default async function StatusPage() {
         logoLightUrl={getMediaUrl(settings.logoLight)}
         logoDarkUrl={getMediaUrl(settings.logoDark)}
       >
+        <LoginButton />
         <Subscribe />
       </Header>
 

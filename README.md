@@ -44,6 +44,7 @@ Password: demo2026#
 - **Beautiful UI** — Modern, responsive status page with dark mode support
 - **Self-Hosted** — Full control over your data and infrastructure
 - **Docker Ready** — Easy deployment with Docker and Docker Compose
+- **Live Demo Mode** — Optional, opt-in demo environment with automatic resets (see [Demo Mode docs](docs/src/getting-started/demo-mode.md))
 
 ## Quick Start
 
@@ -61,12 +62,39 @@ Visit:
 - **Status Page**: http://localhost:3000
 - **Admin Panel**: http://localhost:3000/admin
 
+## Run Your Own Demo
+
+YASP ships an optional **Live Demo Mode** that boots a fully-functional admin
+with pre-seeded data and periodic auto-resets - useful for evaluation,
+sandboxes, or public showcase pages.
+
+> **Warning:** Demo mode is **destructive**. It deletes and reseeds all
+> application data at the configured interval. Only enable it on a dedicated
+> or disposable database - never on production data.
+
+```bash
+docker compose -f docker-compose.demo.yml up -d
+```
+
+This sets `DEMO_MODE=true` on the app container, which:
+
+- Seeds the database with realistic sample data on startup
+- Schedules automatic resets every `DEMO_RESET_INTERVAL_MINUTES` (default 60)
+- Shows a demo banner with countdown in the admin panel
+- Auto-fills the login form with the demo credentials
+- Adds a "Login" button to the public status page
+- Blocks password changes on the demo user account
+
+See [the Demo Mode docs](docs/src/getting-started/demo-mode.md) for full
+configuration, security considerations, and Kubernetes/Helm deployment notes.
+
 ## Documentation
 
 📚 **[Full Documentation](https://hostzero-gmbh.github.io/yet-another-status-page)**
 
 - [Installation Guide](https://hostzero-gmbh.github.io/yet-another-status-page/getting-started/installation/)
 - [Configuration](https://hostzero-gmbh.github.io/yet-another-status-page/getting-started/configuration/)
+- [Demo Mode](docs/src/getting-started/demo-mode.md)
 - [Admin Guide](https://hostzero-gmbh.github.io/yet-another-status-page/admin/overview/)
 - [API Reference](https://hostzero-gmbh.github.io/yet-another-status-page/api/rest/)
 - [Local Development](https://hostzero-gmbh.github.io/yet-another-status-page/development/local-setup/)

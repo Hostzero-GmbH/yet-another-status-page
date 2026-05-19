@@ -148,6 +148,20 @@ externalDatabase:
   # -- Key inside existingSecret holding DATABASE_URI
   existingSecretKey: "DATABASE_URI"
 
+# Demo Mode (optional, opt-in)
+# WARNING: Demo mode is DESTRUCTIVE. It will delete and reseed all application
+# data at the configured interval. Only enable on a dedicated / disposable
+# database - NEVER on production data.
+demo:
+  # -- Enable demo mode on the app container (sets DEMO_MODE=true)
+  enabled: false
+  # -- Email used for the auto-seeded demo user
+  userEmail: demo@yasp.io
+  # -- Password used for the auto-seeded demo user
+  userPassword: demo2026#
+  # -- Interval between automatic database resets, in minutes (minimum 5)
+  resetIntervalMinutes: 60
+
 # -- Additional environment variables
 extraEnv: []
   # - name: DEBUG

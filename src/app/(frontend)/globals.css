@@ -38,6 +38,10 @@
 
   --radius: 0.5rem;
 
+  /* Brand colors */
+  --brand: 142 71% 45%;
+  --brand-hover: 142 71% 38%;
+
   --status-operational: 152 69% 40%;
   --status-degraded: 38 92% 50%;
   --status-partial: 25 95% 53%;
@@ -79,6 +83,10 @@
   --border: 220 15% 20%;
   --input: 220 15% 20%;
   --ring: 220 10% 80%;
+
+  /* Brand colors - same in dark mode */
+  --brand: 142 71% 45%;
+  --brand-hover: 142 71% 38%;
 
   --status-operational: 152 69% 45%;
   --status-degraded: 38 92% 55%;
@@ -122,6 +130,9 @@
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-brand: hsl(var(--brand));
+  --color-brand-hover: hsl(var(--brand-hover));
 
   --color-status-operational: hsl(var(--status-operational));
   --color-status-degraded: hsl(var(--status-degraded));

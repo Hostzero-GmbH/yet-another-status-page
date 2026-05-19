@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { isLocalLoginDisabled } from '@/lib/oidc'
+import { isDemoMode, getDemoUserEmail } from '@/lib/demo'
 import { getServerUrl } from '@/lib/utils'
 
 const isProduction = process.env.NODE_ENV === 'production'
@@ -51,6 +52,22 @@ export const Users: CollectionConfig = {
     create: ({ req: { user } }) => !!user,
     update: ({ req: { user } }) => !!user,
     delete: ({ req: { user } }) => !!user,
+  },
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc, operation, req }) => {
+        // In demo mode, block password changes for the demo user when the
+        // request comes from a logged-in admin UI session. Internal calls
+        // (seed/reset) run without `req.user`, so they remain allowed.
+        if (isDemoMode() && operation === 'update' && req.user) {
+          const email = data?.email || originalDoc?.email
+          if (email === getDemoUserEmail() && data?.password) {
+            throw new Error('Password changes are disabled in demo mode.')
+          }
+        }
+        return data
+      },
+    ],
   },
   fields: [
     {

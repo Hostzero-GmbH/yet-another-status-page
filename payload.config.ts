@@ -38,6 +38,9 @@ import { migrations } from '@/migrations'
 // Optional OIDC/SSO
 import { getOIDCPlugin, isOIDCPartiallyConfigured } from '@/lib/oidc'
 
+// Optional Demo mode
+import { isDemoMode } from '@/lib/demo'
+
 // Utils
 import { getServerUrl } from '@/lib/utils'
 
@@ -69,6 +72,12 @@ if (isVercelBlobEnabled) {
 }
 
 export default buildConfig({
+  onInit: async (payload) => {
+    if (isDemoMode()) {
+      const { initDemoMode } = await import('@/lib/demo')
+      await initDemoMode(payload)
+    }
+  },
   serverURL: getServerUrl(),
   csrf: [
     getServerUrl(),

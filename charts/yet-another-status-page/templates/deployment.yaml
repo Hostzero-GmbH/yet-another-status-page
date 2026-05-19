@@ -81,6 +81,16 @@ spec:
                   name: {{ include "yasp.secretName" . }}
                   key: DATABASE_URI
             {{- end }}
+            {{- if .Values.demo.enabled }}
+            - name: DEMO_MODE
+              value: "true"
+            - name: DEMO_USER_EMAIL
+              value: {{ .Values.demo.userEmail | quote }}
+            - name: DEMO_USER_PASSWORD
+              value: {{ .Values.demo.userPassword | quote }}
+            - name: DEMO_RESET_INTERVAL_MINUTES
+              value: {{ .Values.demo.resetIntervalMinutes | quote }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
