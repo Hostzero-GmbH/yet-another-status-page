@@ -21,7 +21,7 @@
     "test:e2e:report": "npx playwright show-report"
   },
   "dependencies": {
-    "@payloadcms/db-postgres": "3.84.1",
+    "@payloadcms/db-postgres": "3.85.0",
     "@payloadcms/next": "3.84.1",
     "@payloadcms/richtext-lexical": "3.84.1",
     "@payloadcms/storage-vercel-blob": "3.84.1",
