@@ -35,7 +35,7 @@
     "nanoid": "^5.1.11",
     "next": "16.2.6",
     "next-themes": "^0.4.6",
-    "nodemailer": "^8.0.7",
+    "nodemailer": "^8.0.10",
     "payload": "3.84.1",
     "payload-oauth2": "^1.0.21",
     "react": "19.2.6",
