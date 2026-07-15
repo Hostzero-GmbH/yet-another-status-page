@@ -9,6 +9,14 @@ updates:
     labels:
       - "dependencies"
       - "npm"
+    # Payload core + first-party packages share strict same-version peer deps, so any
+    # individual bump breaks `npm install`. Keep them in a single PR.
+    groups:
+      payload:
+        patterns:
+          - "payload"
+          - "@payloadcms/*"
+          - "payload-*"
     ignore:
       # Pinned to 9.x: eslint-plugin-react (transitive via eslint-config-next) caps eslint at ^9.7.
       - dependency-name: "eslint"
