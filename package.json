@@ -38,7 +38,7 @@
     "nodemailer": "^9.0.3",
     "payload": "3.86.0",
     "payload-oauth2": "^1.0.21",
-    "react": "19.2.6",
+    "react": "19.2.7",
     "react-dom": "19.2.6",
     "sass": "^1.100.0",
     "sharp": "0.35.3",
