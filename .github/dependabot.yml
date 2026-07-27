@@ -9,19 +9,58 @@ updates:
     labels:
       - "dependencies"
       - "npm"
-    # Payload core + first-party packages share strict same-version peer deps, so any
-    # individual bump breaks `npm install`. Keep them in a single PR.
+    # A dependency belongs to the first group it matches, so order matters.
     groups:
+      # Payload core + first-party packages share strict same-version peer deps, so any
+      # individual bump breaks `npm install`. graphql is version-constrained by Payload's
+      # peer deps, keep it in the same PR.
       payload:
         patterns:
           - "payload"
           - "@payloadcms/*"
           - "payload-*"
+          - "graphql"
+      next:
+        patterns:
+          - "next"
+          - "@next/*"
+          - "eslint-config-next"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      lint:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "eslint-plugin-*"
+          - "typescript-eslint"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "postcss"
+      playwright:
+        patterns:
+          - "playwright"
+          - "@playwright/test"
+      nodemailer:
+        patterns:
+          - "nodemailer"
+          - "@types/nodemailer"
     ignore:
-      # Pinned to 9.x: eslint-plugin-react (transitive via eslint-config-next) caps eslint at ^9.7.
+      # Payload's peer deps require graphql ^16; drop once Payload supports graphql 17.
+      - dependency-name: "graphql"
+        update-types: ["version-update:semver-major"]
+      # Pinned to 9.x: eslint-plugin-react (also transitive via eslint-config-next) caps eslint at ^9.7.
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint caps typescript at <6.1.0; drop once it supports TS 7.
+      - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
       # @types/node tracks the runtime Node major (LTS). Bump together with the Dockerfile/CI Node image.
       - dependency-name: "@types/node"
@@ -50,3 +89,18 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    groups:
+      # upload/download and the Pages action trio use versioned wire formats and
+      # must be bumped in lockstep.
+      pages:
+        patterns:
+          - "actions/configure-pages"
+          - "actions/upload-pages-artifact"
+          - "actions/deploy-pages"
+      artifacts:
+        patterns:
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
+      docker:
+        patterns:
+          - "docker/*"
