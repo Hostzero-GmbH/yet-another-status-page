@@ -1,6 +1,6 @@
 {
   "name": "yet-another-status-page",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A modern, self-hosted status page built with Payload CMS and Next.js",
   "type": "module",
   "scripts": {
