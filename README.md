@@ -2,7 +2,7 @@
 
 A modern, self-hosted status page built with [Payload CMS](https://payloadcms.com/) and [Next.js](https://nextjs.org/).
 
-[![Docker Build](https://github.com/Hostzero-GmbH/yet-another-status-page/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Hostzero-GmbH/yet-another-status-page/actions/workflows/docker-publish.yml)
+[![Release](https://github.com/Hostzero-GmbH/yet-another-status-page/actions/workflows/release.yml/badge.svg)](https://github.com/Hostzero-GmbH/yet-another-status-page/actions/workflows/release.yml)
 [![Documentation](https://github.com/Hostzero-GmbH/yet-another-status-page/actions/workflows/docs.yml/badge.svg)](https://hostzero-gmbh.github.io/yet-another-status-page)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
