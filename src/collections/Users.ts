@@ -31,6 +31,7 @@ export const Users: CollectionConfig = {
     group: 'Admin',
   },
   auth: {
+    useAPIKey: true,
     // Disable database sessions - use stateless JWT
     // Sessions cause issues behind reverse proxy
     useSessions: false,
