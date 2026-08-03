@@ -80,14 +80,14 @@ async function getStatusData() {
     collection: 'service-groups',
     depth: 2,
     sort: '_order',
-    limit: 100,
+    pagination: false,
   })
 
   const services = await payload.find({
     collection: 'services',
     depth: 1,
     sort: '_order',
-    limit: 100,
+    pagination: false,
   })
 
   const retentionHours = settings.maintenanceTerminalRetentionHours ?? 24
