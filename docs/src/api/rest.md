@@ -10,10 +10,60 @@ https://your-status-page.com/api
 
 ## Authentication
 
-Most read endpoints are public. Admin endpoints require authentication via:
+Most read endpoints are public. Write and admin operations require authentication via:
 
 - Session cookie (from admin login)
-- API key header: `Authorization: Bearer <api-key>`
+- API key (for scripts, CI, and other non-interactive clients)
+
+### API keys
+
+API keys are per user and use Payload's built-in API key strategy. Requests authenticated with a key run as that user and inherit their access control.
+
+#### Create a key
+
+1. Open **Admin → Users** and edit (or create) a user
+2. Enable **Enable API Key**
+3. Save, then copy the generated API key — treat it like a password
+
+Prefer a dedicated service user with the minimum role you need (`editor` or `admin`) instead of reusing a personal account.
+
+#### Authenticate requests
+
+Send the case-sensitive `Authorization` header in this format:
+
+```http
+Authorization: users API-Key <your-api-key>
+```
+
+Example — create an incident:
+
+```bash
+curl -X POST https://your-status-page.com/api/incidents \
+  -H "Authorization: users API-Key YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Elevated error rates",
+    "affectedServices": [1],
+    "updates": [
+      {
+        "status": "investigating",
+        "message": "We are investigating elevated error rates."
+      }
+    ]
+  }'
+```
+
+Example — fetch with JavaScript:
+
+```js
+const response = await fetch('https://your-status-page.com/api/incidents', {
+  headers: {
+    Authorization: 'users API-Key YOUR_API_KEY',
+  },
+})
+```
+
+See also the [Payload API key docs](https://payloadcms.com/docs/authentication/api-keys).
 
 ## Endpoints
 
