@@ -60,12 +60,12 @@ export function ServiceGroup({ name, services, defaultExpanded = true }: Service
             {services.map((service) => (
               <div
                 key={service.name}
-                className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-muted/30"
+                className="flex items-center justify-between gap-2 px-5 py-4 transition-colors hover:bg-muted/30"
               >
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium text-foreground">{service.name}</span>
                   {service.description && (
-                    <span className="text-xs text-muted-foreground">{service.description}</span>
+                    <span className="text-xs text-justify text-muted-foreground">{service.description}</span>
                   )}
                 </div>
                 <StatusIndicator status={service.status} />
