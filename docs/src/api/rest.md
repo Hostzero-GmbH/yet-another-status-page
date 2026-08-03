@@ -43,9 +43,13 @@ curl -X POST https://your-status-page.com/api/incidents \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Elevated error rates",
-    "status": "investigating",
-    "impact": "major",
-    "services": [1]
+    "affectedServices": [1],
+    "updates": [
+      {
+        "status": "investigating",
+        "message": "We are investigating elevated error rates."
+      }
+    ]
   }'
 ```
 
