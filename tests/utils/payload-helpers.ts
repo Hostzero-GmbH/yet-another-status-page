@@ -173,6 +173,8 @@ export async function createMaintenance(data: {
   scheduledEndAt?: string
   duration?: string
   affectedServices?: number[]
+  autoStartOnSchedule?: boolean
+  autoCompleteOnSchedule?: boolean
 }): Promise<Maintenance> {
   const response = await fetch(`${API_BASE}/api/maintenances`, {
     method: 'POST',
@@ -184,6 +186,8 @@ export async function createMaintenance(data: {
       scheduledEndAt: data.scheduledEndAt,
       duration: data.duration,
       affectedServices: data.affectedServices || [],
+      autoStartOnSchedule: data.autoStartOnSchedule,
+      autoCompleteOnSchedule: data.autoCompleteOnSchedule,
     }),
   })
   
@@ -206,6 +210,31 @@ export async function getMaintenance(id: number): Promise<Maintenance> {
     throw new Error(`Failed to fetch maintenance: ${response.status} ${response.statusText} - ${errorBody}`)
   }
   return response.json()
+}
+
+/**
+ * Whether the maintenance is *stored* with the given status. The `where` filter is applied
+ * by the database, so unlike getMaintenance() the result is not rewritten by the afterRead
+ * hook's in-memory schedule transition.
+ */
+export async function maintenanceIsStoredAs(
+  id: number,
+  status: MaintenanceUpdate['status'],
+): Promise<boolean> {
+  const query = new URLSearchParams({
+    'where[and][0][id][equals]': String(id),
+    'where[and][1][status][equals]': status,
+    limit: '1',
+  })
+
+  const response = await fetch(`${API_BASE}/api/maintenances?${query}`)
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Failed to query maintenances: ${response.status} ${response.statusText} - ${errorBody}`)
+  }
+
+  const result = await response.json()
+  return (result.docs || []).length === 1
 }
 
 /**

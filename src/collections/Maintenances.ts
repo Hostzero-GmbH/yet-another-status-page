@@ -24,6 +24,60 @@ function canTransition(from: MaintenanceStatus, to: MaintenanceStatus): boolean 
   return validTransitions[from]?.includes(to) ?? false
 }
 
+interface ScheduleFields {
+  status?: MaintenanceStatus | string | null
+  scheduledStartAt?: string | null
+  scheduledEndAt?: string | null
+  autoStartOnSchedule?: boolean | null
+  autoCompleteOnSchedule?: boolean | null
+}
+
+/** The status the schedule dictates right now, or null when no transition applies. */
+function resolveScheduledStatus(doc: ScheduleFields, now = new Date()): MaintenanceStatus | null {
+  const current = doc.status as MaintenanceStatus
+  const startTime = doc.scheduledStartAt ? new Date(doc.scheduledStartAt) : null
+  const endTime = doc.scheduledEndAt ? new Date(doc.scheduledEndAt) : null
+
+  // Auto-complete takes priority over auto-start
+  if (doc.autoCompleteOnSchedule && endTime && now >= endTime && canTransition(current, 'completed')) {
+    return 'completed'
+  }
+  if (doc.autoStartOnSchedule && startTime && now >= startTime && canTransition(current, 'in_progress')) {
+    return 'in_progress'
+  }
+  return null
+}
+
+const pendingScheduleWrites = new Set<number | string>()
+
+/**
+ * Persists a schedule transition detected while reading. The write is deferred onto a
+ * separate Payload instance because the reading request may still hold an open transaction
+ * that has not committed the row yet (e.g. the read that Payload performs during `create`).
+ */
+function persistScheduledStatus(id: number | string, status: MaintenanceStatus) {
+  if (pendingScheduleWrites.has(id)) return
+  pendingScheduleWrites.add(id)
+
+  setImmediate(async () => {
+    try {
+      const { getPayload } = await import('payload')
+      const config = (await import('@payload-config')).default
+      const payload = await getPayload({ config })
+      await payload.update({
+        collection: 'maintenances',
+        id,
+        data: { status },
+        context: { skipAutoStatusUpdate: true },
+      })
+    } catch (error) {
+      console.error('[Maintenances] Failed to persist scheduled status:', error)
+    } finally {
+      pendingScheduleWrites.delete(id)
+    }
+  })
+}
+
 // Format scheduled times for notifications
 function formatDateTime(date: string | null | undefined): string | null {
   if (!date) return null
@@ -324,7 +378,7 @@ export const Maintenances: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      ({ data, operation, req }) => {
+      ({ data, operation, originalDoc, req }) => {
         data = data || {}
 
         if (operation === 'create') {
@@ -339,6 +393,13 @@ export const Maintenances: CollectionConfig = {
             const latest = updates[updates.length - 1]
             if (latest?.status) data.status = latest.status
           }
+        }
+
+        // Apply the schedule transition on write too, so a maintenance saved with an
+        // already-elapsed start or end time is stored with the correct status right away.
+        const scheduledStatus = resolveScheduledStatus({ ...originalDoc, ...data })
+        if (scheduledStatus) {
+          data.status = scheduledStatus
         }
 
         if (data.status === 'cancelled' && !data.cancelledAt) {
@@ -357,61 +418,16 @@ export const Maintenances: CollectionConfig = {
       },
     ],
     afterRead: [
-      async ({ doc, req }) => {
-        if (!doc) return doc
+      ({ doc }) => {
+        if (!doc?.id) return doc
 
-        const now = new Date()
-        const currentStatus = doc.status as MaintenanceStatus
-        const startTime = doc.scheduledStartAt ? new Date(doc.scheduledStartAt) : null
-        const endTime = doc.scheduledEndAt ? new Date(doc.scheduledEndAt) : null
+        // Catches schedules that elapsed since the last write. The reader always sees the
+        // transitioned status; persisting it happens out of band.
+        const newStatus = resolveScheduledStatus(doc)
+        if (!newStatus) return doc
 
-        let newStatus: MaintenanceStatus | null = null
-
-        // Check if we should auto-complete (check this first as it takes priority)
-        if (
-          doc.autoCompleteOnSchedule &&
-          endTime &&
-          now >= endTime &&
-          canTransition(currentStatus, 'completed')
-        ) {
-          newStatus = 'completed'
-        }
-        // Check if we should auto-start
-        else if (
-          doc.autoStartOnSchedule &&
-          startTime &&
-          now >= startTime &&
-          canTransition(currentStatus, 'in_progress')
-        ) {
-          newStatus = 'in_progress'
-        }
-
-        // If status needs to change, update it in the database
-        if (newStatus && newStatus !== currentStatus) {
-          try {
-            await req.payload.update({
-              collection: 'maintenances',
-              id: doc.id,
-              data: {
-                status: newStatus,
-              },
-              // Prevent infinite loop
-              context: {
-                skipAutoStatusUpdate: true,
-              },
-            })
-            // Return the updated status in the response
-            return {
-              ...doc,
-              status: newStatus,
-            }
-          } catch (error) {
-            // If update fails, just return the original doc
-            console.error('Failed to auto-update maintenance status:', error)
-          }
-        }
-
-        return doc
+        persistScheduledStatus(doc.id, newStatus)
+        return { ...doc, status: newStatus }
       },
     ],
     afterChange: [

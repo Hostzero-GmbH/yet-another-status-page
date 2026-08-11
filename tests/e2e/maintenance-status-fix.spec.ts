@@ -4,6 +4,7 @@ import {
   createMaintenance,
   appendMaintenanceUpdate,
   getMaintenance,
+  maintenanceIsStoredAs,
   updateSettings,
 } from '../utils/payload-helpers'
 
@@ -11,8 +12,9 @@ import {
  * Regression coverage for the maintenance status sync + retention window.
  *
  * These tests exercise the beforeChange hook (status syncs from the latest
- * update, cancelledAt/completedAt get stamped) and the home page query that
- * keeps terminal-state maintenances visible for `maintenanceTerminalRetentionHours`.
+ * update, cancelledAt/completedAt get stamped, schedules auto-transition), the
+ * afterRead hook (schedules that elapse between writes), and the home page query
+ * that keeps terminal-state maintenances visible for `maintenanceTerminalRetentionHours`.
  */
 // Tests in this file mutate the shared Settings global (retention hours)
 // and rely on a known maintenances list (the home page query has limit: 10).
@@ -165,5 +167,71 @@ test.describe('Maintenance retention window', () => {
 
     // Restore default for following tests / runs.
     await updateSettings({ maintenanceTerminalRetentionHours: 24 })
+  })
+})
+
+// Runs last so the maintenances it creates don't crowd out the home page cards
+// asserted above (that query has limit: 10).
+test.describe('Maintenance schedule auto-transition', () => {
+  test('a start time already in the past is stored as in_progress on create', async () => {
+    const maintenance = await createMaintenance({
+      title: `Past Start ${Date.now()}`,
+      status: 'upcoming',
+      scheduledStartAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+      scheduledEndAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+    })
+
+    expect(maintenance.status).toBe('in_progress')
+    expect(await maintenanceIsStoredAs(maintenance.id, 'in_progress')).toBe(true)
+  })
+
+  test('an end time already in the past is stored as completed and stamps completedAt', async () => {
+    const maintenance = await createMaintenance({
+      title: `Past End ${Date.now()}`,
+      status: 'upcoming',
+      scheduledStartAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+      scheduledEndAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+    })
+
+    expect(maintenance.status).toBe('completed')
+    expect(maintenance.completedAt).toBeTruthy()
+    expect(await maintenanceIsStoredAs(maintenance.id, 'completed')).toBe(true)
+  })
+
+  test('the auto-schedule checkboxes suppress the transition', async () => {
+    const maintenance = await createMaintenance({
+      title: `No Auto Schedule ${Date.now()}`,
+      status: 'upcoming',
+      scheduledStartAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+      scheduledEndAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+      autoStartOnSchedule: false,
+      autoCompleteOnSchedule: false,
+    })
+
+    expect(maintenance.status).toBe('upcoming')
+    expect(await maintenanceIsStoredAs(maintenance.id, 'upcoming')).toBe(true)
+  })
+
+  test('a start time that elapses after creation transitions on read and is persisted', async () => {
+    test.setTimeout(60_000)
+
+    const maintenance = await createMaintenance({
+      title: `Elapsing Start ${Date.now()}`,
+      status: 'upcoming',
+      scheduledStartAt: new Date(Date.now() + 5000).toISOString(),
+    })
+    expect(maintenance.status).toBe('upcoming')
+
+    // afterRead reports the transition to the caller immediately, but schedules the
+    // write out of band — so read first, then check what actually landed in the column.
+    await expect
+      .poll(
+        async () => {
+          const read = await getMaintenance(maintenance.id)
+          return read.status === 'in_progress' && (await maintenanceIsStoredAs(maintenance.id, 'in_progress'))
+        },
+        { timeout: 30_000 },
+      )
+      .toBe(true)
   })
 })
