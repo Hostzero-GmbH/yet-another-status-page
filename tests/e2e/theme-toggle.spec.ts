@@ -90,6 +90,25 @@ test.describe('Theme Toggle', () => {
   })
 })
 
+test.describe('Theme Toggle - 404 page', () => {
+  test('toggles theme on unmatched routes', async ({ page }) => {
+    await page.goto('/this-page-does-not-exist')
+
+    await expect(page.getByText('Page Not Found')).toBeVisible()
+
+    const html = page.locator('html')
+    const themeToggle = page.getByRole('button', { name: /Switch to (light|dark) theme/i })
+    await expect(themeToggle).toBeVisible()
+
+    const initiallyDark = await html.evaluate((el) => el.classList.contains('dark'))
+
+    await themeToggle.click()
+
+    const afterToggle = await html.evaluate((el) => el.classList.contains('dark'))
+    expect(afterToggle).toBe(!initiallyDark)
+  })
+})
+
 test.describe('Theme Toggle - System Preference', () => {
   test('respects system dark mode preference', async ({ page }) => {
     // Emulate dark color scheme
