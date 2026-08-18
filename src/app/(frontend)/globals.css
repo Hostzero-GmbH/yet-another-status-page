@@ -100,7 +100,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-inter, system-ui), sans-serif;
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -165,7 +165,7 @@
   }
 
   html {
-    font-family: var(--font-inter), system-ui, sans-serif;
+    font-family: var(--font-inter, system-ui), sans-serif;
   }
 
   body {

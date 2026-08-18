@@ -5,6 +5,7 @@ import './(frontend)/globals.css'
 import { Header } from '@/components/status/Header'
 import { Footer } from '@/components/status/Footer'
 import { ThemeProvider } from '@/components/theme-provider'
+import { inter } from '@/lib/fonts'
 import { getMediaUrl } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -27,7 +28,7 @@ export default async function NotFound() {
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex min-h-screen flex-col">
