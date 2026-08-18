@@ -1,10 +1,17 @@
 import { ViewTransition } from 'react'
+import { Inter } from 'next/font/google'
 import { getSettings } from '@/lib/payload'
 import { getMediaUrl } from '@/lib/utils'
 import { ThemeProvider } from '@/components/theme-provider'
 import type { Media } from '@/payload-types'
 import type { Metadata } from 'next'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 export const dynamic = 'force-dynamic'
 
@@ -48,7 +55,7 @@ export default function FrontendLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ViewTransition>{children}</ViewTransition>
