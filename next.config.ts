@@ -4,9 +4,6 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   output: 'standalone',
   reactCompiler: false,
-  experimental: {
-    viewTransition: true,
-  },
   // Turbopack configuration to avoid webpack/turbopack mismatch warning
   turbopack: {
     // Add any turbopack-specific configuration here if needed
