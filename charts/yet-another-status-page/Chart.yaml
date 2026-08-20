@@ -2,8 +2,8 @@ apiVersion: v2
 name: yet-another-status-page
 description: A self-hosted status page built with Payload CMS and Next.js
 type: application
-version: 0.5.0
-appVersion: 0.5.0
+version: 0.5.1
+appVersion: 0.5.1
 kubeVersion: ">=1.25.0-0"
 home: https://github.com/Hostzero-GmbH/yet-another-status-page
 sources:
