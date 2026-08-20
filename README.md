@@ -92,12 +92,12 @@ configuration, security considerations, and Kubernetes/Helm deployment notes.
 
 📚 **[Full Documentation](https://hostzero-gmbh.github.io/yet-another-status-page)**
 
-- [Installation Guide](https://hostzero-gmbh.github.io/yet-another-status-page/getting-started/installation/)
-- [Configuration](https://hostzero-gmbh.github.io/yet-another-status-page/getting-started/configuration/)
+- [Installation Guide](https://docs.yasp.io/getting-started/installation.html)
+- [Configuration](https://docs.yasp.io/getting-started/configuration.html)
 - [Demo Mode](docs/src/getting-started/demo-mode.md)
-- [Admin Guide](https://hostzero-gmbh.github.io/yet-another-status-page/admin/overview/)
-- [API Reference](https://hostzero-gmbh.github.io/yet-another-status-page/api/rest/)
-- [Local Development](https://hostzero-gmbh.github.io/yet-another-status-page/development/local-setup/)
+- [Admin Guide](https://docs.yasp.io/admin/overview.html)
+- [API Reference](https://docs.yasp.io/api/rest.html)
+- [Local Development](https://docs.yasp.io/development/local-setup.html)
 
 ## Tech Stack
 
