@@ -7,6 +7,7 @@ export type OverallStatus = "operational" | "degraded" | "partial" | "major" | "
 
 interface StatusBannerProps {
   status: OverallStatus;
+  message?: string;
 }
 
 const statusConfig = {
@@ -37,9 +38,10 @@ const statusConfig = {
   },
 };
 
-export function StatusBanner({ status }: StatusBannerProps) {
+export function StatusBanner({ status, message }: StatusBannerProps) {
   const config = statusConfig[status];
   const Icon = config.icon;
+  const text = message?.trim() || config.text;
 
   return (
     <div
@@ -50,7 +52,7 @@ export function StatusBanner({ status }: StatusBannerProps) {
     >
       <div className="flex items-center gap-3">
         <Icon className="h-5 w-5 flex-shrink-0" />
-        <span className="text-base font-medium">{config.text}</span>
+        <span className="text-base font-medium">{text}</span>
       </div>
     </div>
   );

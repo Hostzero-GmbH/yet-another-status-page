@@ -262,7 +262,7 @@ export default async function StatusPage() {
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
         {/* Status Banner */}
         <section className="mb-8 animate-fade-in">
-          <StatusBanner status={overallStatus} />
+          <StatusBanner status={overallStatus} message={settings.customStatusMessage ?? undefined} />
         </section>
 
         {/* Service Groups */}
