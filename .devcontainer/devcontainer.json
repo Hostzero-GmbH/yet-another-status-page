@@ -1,0 +1,31 @@
+{
+  "name": "Yet Another Status Page",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/postgres:1": {
+      "version": "16"
+    }
+  },
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Status Page",
+      "onAutoForward": "notify"
+    }
+  },
+  "containerEnv": {
+    "DATABASE_URI": "postgresql://postgres:postgres@127.0.0.1:5432/hostzero_status",
+    "PAYLOAD_SECRET": "dev-secret-key-change-in-production",
+    "SERVER_URL": "http://localhost:3000"
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  }
+}

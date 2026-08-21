@@ -8,7 +8,7 @@ The repository ships three compose files:
 
 | File | Purpose |
 | --- | --- |
-| `docker-compose.dev.yml` | Hot-reloading dev environment (Next.js + Postgres). See [Local Setup](./local-setup.md). |
+| `docker-compose.dev.yml` | Optional Compose-based hot-reload stack. Daily development uses the [Dev Container](./local-setup.md). |
 | `docker-compose.test.yml` | E2E test environment used by CI. |
 | `docker-compose.yml` | Pre-built image + Postgres for evaluation or single-host self-hosting. |
 

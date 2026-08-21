@@ -35,21 +35,15 @@ For detailed setup instructions, see the [Local Development Guide](https://hostz
 
 ### Quick Start
 
+Open the repo in Cursor or VS Code and **Reopen in Container**. The Dev Container provides Node.js and PostgreSQL. Then:
+
 ```bash
-# Install dependencies
-npm install
-
-# Start the database
-docker compose -f docker-compose.dev.yml up -d postgres
-
-# Set up environment
-cp .env.example .env
-
-# Start the development server
 npm run dev
 ```
 
-Access at http://localhost:3333 (status page) and http://localhost:3333/admin (admin panel).
+Access at http://localhost:3000 (status page) and http://localhost:3000/admin (admin panel).
+
+See the [Local Development Guide](https://hostzero-gmbh.github.io/yet-another-status-page/development/local-setup/) for a host-only setup.
 
 ## Making Changes
 

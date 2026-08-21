@@ -29,7 +29,7 @@ helm upgrade --install status \
 
 After the rollout, the status page is reachable at `<serverUrl>` and the admin panel at `<serverUrl>/admin`.
 
-For evaluation on a single host, see [Docker Compose](development/docker-compose.md). For local hacking, see [Local Setup](development/local-setup.md).
+For evaluation on a single host, see [Docker Compose](development/docker-compose.md). For local hacking, see [Local Setup](development/local-setup.md) (Dev Container).
 
 ## Architecture
 

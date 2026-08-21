@@ -4,39 +4,41 @@ This guide explains how to set up Yet Another Status Page for local development.
 
 ## Prerequisites
 
-- Node.js 24+
-- PostgreSQL 15+ (or Docker)
-- npm or pnpm
+- [Cursor](https://cursor.com/) or VS Code with the Dev Containers extension
+- Docker (used only to run the Dev Container)
 
-## Quick Start with Docker
+## Dev Container (recommended)
 
-The easiest way to develop locally is using the included Docker Compose configuration.
+The repo includes a [Dev Container](https://containers.dev/) that provides Node.js 24 and PostgreSQL 16. You do not need Compose or a host Postgres install.
+
+1. Clone the repository
+2. Open the folder in Cursor or VS Code
+3. Reopen in Container when prompted (or run **Dev Containers: Reopen in Container**)
+
+On first create the container installs dependencies, creates the `hostzero_status` database, and runs migrations.
 
 ```bash
-# Clone the repository
-git clone https://github.com/Hostzero-GmbH/yet-another-status-page.git
-cd yet-another-status-page
-
-# Start the development environment
-docker compose -f docker-compose.dev.yml up -d postgres  # Start only the database
-
-# Install dependencies
-npm install
-
-# Run database migrations
-npm run payload migrate
-
-# Start the development server
 npm run dev
 ```
 
 Visit:
-- Status page: http://localhost:3333
-- Admin panel: http://localhost:3333/admin
 
-> **Note**: The dev compose file uses port 3333 to avoid conflicts with production on port 3000.
+- Status page: http://localhost:3000
+- Admin panel: http://localhost:3000/admin
+
+Environment defaults inside the container:
+
+```env
+DATABASE_URI=postgresql://postgres:postgres@127.0.0.1:5432/hostzero_status
+PAYLOAD_SECRET=dev-secret-key-change-in-production
+SERVER_URL=http://localhost:3000
+```
+
+A `.env` is created from `.env.example` if you do not already have one.
 
 ## Manual Setup
+
+Use this if you prefer to run Node on the host.
 
 ### 1. Install PostgreSQL
 
@@ -47,6 +49,16 @@ brew services start postgresql@16
 
 # Create database
 createdb hostzero_status
+```
+
+Or run a throwaway Postgres container:
+
+```bash
+docker run -d --name yasp-postgres -p 5432:5432 \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=hostzero_status \
+  postgres:16-alpine
 ```
 
 ### 2. Clone and Install
@@ -63,10 +75,8 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env`:
-
 ```env
-DATABASE_URI=postgres://localhost:5432/hostzero_status
+DATABASE_URI=postgresql://postgres:postgres@localhost:5432/hostzero_status
 PAYLOAD_SECRET=your-development-secret-key
 SERVER_URL=http://localhost:3000
 ```
@@ -74,7 +84,7 @@ SERVER_URL=http://localhost:3000
 ### 4. Run Migrations
 
 ```bash
-npm run payload migrate
+npx payload migrate
 ```
 
 ### 5. Start Development Server
@@ -90,9 +100,9 @@ npm run dev
 | `npm run dev` | Start development server with hot reload |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
-| `npm run payload migrate` | Run database migrations |
-| `npm run payload generate:types` | Generate TypeScript types |
-| `npm run payload generate:importmap` | Generate import map for custom components |
+| `npx payload migrate` | Run database migrations |
+| `npm run generate:types` | Generate TypeScript types |
+| `npm run generate:importmap` | Generate import map for custom components |
 
 ## Project Structure
 
@@ -122,14 +132,14 @@ status-page/
 1. Create a new file in `src/collections/`
 2. Export the collection config
 3. Import and add to `payload.config.ts`
-4. Run `npm run payload generate:types`
+4. Run `npm run generate:types`
 5. Run migrations if needed
 
 ### Adding a Custom Admin Component
 
 1. Create component in `src/components/admin/`
 2. Reference it in the collection config
-3. Run `npm run payload generate:importmap`
+3. Run `npm run generate:importmap`
 
 ### Adding an API Endpoint
 
@@ -156,7 +166,7 @@ psql $DATABASE_URI
 
 # Reset database
 dropdb hostzero_status && createdb hostzero_status
-npm run payload migrate
+npx payload migrate
 ```
 
 ### Clear Cache
