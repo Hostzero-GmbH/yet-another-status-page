@@ -10,6 +10,7 @@ import { Footer } from '@/components/status/Footer'
 import { CopyLinkButton } from '@/components/status/CopyLinkButton'
 import { IncidentUpdatesTimeline } from '@/components/status/IncidentUpdatesTimeline'
 import { cn, getMediaUrl } from '@/lib/utils'
+import { formatDate, formatTime, resolveDateTimeConfig } from '@/lib/datetime'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -18,25 +19,10 @@ interface PageProps {
   params: Promise<{ shortId: string }>
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  })
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
 async function getIncidentData(shortId: string) {
   const payload = await getCachedPayload()
   const settings = await getSettings()
+  const dt = resolveDateTimeConfig(settings)
 
   const result = await payload.find({
     collection: 'incidents',
@@ -57,8 +43,8 @@ async function getIncidentData(shortId: string) {
     id: `${incident.id}-update-${index}`,
     status: update.status as 'investigating' | 'identified' | 'monitoring' | 'resolved',
     message: update.message || '',
-    timestamp: formatTime(new Date(update.createdAt)),
-    date: formatDate(new Date(update.createdAt)),
+    timestamp: formatTime(new Date(update.createdAt), dt),
+    date: formatDate(new Date(update.createdAt), dt),
   })).reverse()
 
   const affectedServices = (incident.affectedServices || []).map((s) => {
@@ -77,8 +63,8 @@ async function getIncidentData(shortId: string) {
       status: getIncidentStatus(incident.updates),
       affectedServices,
       updates,
-      createdAt: formatDate(new Date(incident.createdAt)),
-      resolvedAt: resolvedAtDate ? formatDate(new Date(resolvedAtDate)) : null,
+      createdAt: formatDate(new Date(incident.createdAt), dt),
+      resolvedAt: resolvedAtDate ? formatDate(new Date(resolvedAtDate), dt) : null,
     },
   }
 }
@@ -179,7 +165,7 @@ export default async function IncidentPage({ params }: PageProps) {
         </section>
       </main>
 
-      <Footer footerText={settings.footerText} />
+      <Footer footerText={settings.footerText} timezone={settings.timezone} />
     </div>
   )
 }

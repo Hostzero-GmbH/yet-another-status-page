@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { localizedDateAdmin } from '@/lib/localizedDateAdmin'
 
 export const notificationChannelOptions = [
   { label: 'Email', value: 'email' },
@@ -208,11 +209,10 @@ export const Notifications: CollectionConfig = {
       type: 'date',
       label: 'Sent At',
       admin: {
-        readOnly: true,
-        condition: (data) => data?.status === 'sent',
-        date: {
-          pickerAppearance: 'dayAndTime',
-        },
+        ...localizedDateAdmin({
+          readOnly: true,
+          condition: (data) => (data as { status?: string })?.status === 'sent',
+        }),
       },
     },
   ],

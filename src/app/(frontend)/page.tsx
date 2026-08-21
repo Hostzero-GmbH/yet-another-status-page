@@ -12,43 +12,19 @@ import { ServiceGroup } from '@/components/status/ServiceGroup'
 import { MaintenanceCard } from '@/components/status/MaintenanceCard'
 import { IncidentTimelineWithLinks } from '@/components/status/IncidentTimeline'
 import { StatusLegend } from '@/components/status/StatusLegend'
+import {
+  addZonedDays,
+  formatDate,
+  formatDateSlug,
+  formatDateTime,
+  formatTime,
+  resolveDateTimeConfig,
+} from '@/lib/datetime'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 type ServiceStatus = 'operational' | 'degraded' | 'partial' | 'major' | 'maintenance'
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
-function formatDateSlug(date: Date): string {
-  return date.toISOString().split('T')[0]
-}
-
-function formatDateTime(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }) + ' at ' + date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  })
-}
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  })
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
@@ -75,6 +51,7 @@ export async function generateMetadata(): Promise<Metadata> {
 async function getStatusData() {
   const payload = await getCachedPayload()
   const settings = await getSettings()
+  const dt = resolveDateTimeConfig(settings)
 
   const serviceGroups = await payload.find({
     collection: 'service-groups',
@@ -159,7 +136,7 @@ async function getStatusData() {
       id: `${m.id}-update-${index}`,
       status: update.status,
       message: update.message || '',
-      timestamp: formatTime(new Date(update.createdAt)),
+      timestamp: formatTime(new Date(update.createdAt), dt),
     })).reverse()
 
     return {
@@ -167,7 +144,7 @@ async function getStatusData() {
       shortId: m.shortId || '',
       title: m.title,
       description: m.description,
-      scheduledAt: formatDateTime(scheduledStart),
+      scheduledAt: formatDateTime(scheduledStart, dt),
       duration: durationText,
       affectedServices: (m.affectedServices || []).map((s) => {
         if (typeof s === 'object' && s !== null) {
@@ -183,10 +160,10 @@ async function getStatusData() {
   // Group incidents by day
   const incidentsByDay = new Map<string, { incidents: typeof formattedIncidents, dateSlug: string }>()
 
+  const today = new Date()
   for (let i = 0; i < 5; i++) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    incidentsByDay.set(formatDate(date), { incidents: [], dateSlug: formatDateSlug(date) })
+    const date = addZonedDays(today, -i, dt.timezone)
+    incidentsByDay.set(formatDate(date, dt), { incidents: [], dateSlug: formatDateSlug(date, dt.timezone) })
   }
 
   const formattedIncidents = incidents.docs.map((incident) => ({
@@ -198,13 +175,13 @@ async function getStatusData() {
       id: `${incident.id}-update-${index}`,
       status: update.status as 'investigating' | 'identified' | 'monitoring' | 'resolved',
       message: update.message || '',
-      timestamp: formatTime(new Date(update.createdAt)),
+      timestamp: formatTime(new Date(update.createdAt), dt),
     })).reverse(),
     createdAt: new Date(incident.createdAt),
   }))
 
   formattedIncidents.forEach((incident) => {
-    const dateKey = formatDate(incident.createdAt)
+    const dateKey = formatDate(incident.createdAt, dt)
     if (incidentsByDay.has(dateKey)) {
       incidentsByDay.get(dateKey)!.incidents.push(incident)
     }
@@ -317,7 +294,7 @@ export default async function StatusPage() {
         </section>
       </main>
 
-      <Footer footerText={settings.footerText} />
+      <Footer footerText={settings.footerText} timezone={settings.timezone} />
     </div>
   )
 }

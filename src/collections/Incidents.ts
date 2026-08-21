@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { generateShortId } from '@/lib/shortId'
 import { standardAccess } from '@/lib/access'
 import { getServerUrl } from '@/lib/utils'
+import { localizedDateAdmin } from '@/lib/localizedDateAdmin'
 
 export const incidentStatusOptions = [
   { label: 'Investigating', value: 'investigating' },
@@ -169,14 +170,11 @@ export const Incidents: CollectionConfig = {
       type: 'date',
       label: 'Resolved At',
       index: true,
-      admin: {
+      admin: localizedDateAdmin({
         position: 'sidebar',
         description: 'When the incident was resolved',
         readOnly: true,
-        date: {
-          pickerAppearance: 'dayAndTime',
-        },
-      },
+      }),
     },
     {
       name: 'affectedServices',
@@ -220,12 +218,9 @@ export const Incidents: CollectionConfig = {
           type: 'date',
           required: true,
           defaultValue: () => new Date().toISOString(),
-          admin: {
+          admin: localizedDateAdmin({
             description: 'When this update was posted',
-            date: {
-              pickerAppearance: 'dayAndTime',
-            },
-          },
+          }),
         },
       ],
     },

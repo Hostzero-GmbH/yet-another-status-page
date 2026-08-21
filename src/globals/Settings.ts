@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload'
 import { authenticatedOrTestWrite } from '@/lib/access'
+import { TIMEZONE_OPTIONS } from '@/lib/datetime'
 
 export const Settings: GlobalConfig = {
   slug: 'settings',
@@ -43,7 +44,7 @@ export const Settings: GlobalConfig = {
           type: 'richText',
           label: 'Footer Text',
           admin: {
-            description: 'Text displayed in the footer. Supports bold, italic, underline, and links. Leave empty for default.',
+            description: 'Text displayed in the footer. Supports bold, italic, underline, and links.',
           },
         },
       ],
@@ -170,6 +171,50 @@ export const Settings: GlobalConfig = {
           admin: {
             description:
               'How long completed and cancelled maintenances stay visible on the status page after they enter a terminal state.',
+          },
+        },
+      ],
+    },
+    {
+      type: 'collapsible',
+      label: 'Localization',
+      admin: {
+        initCollapsed: true,
+      },
+      fields: [
+        {
+          name: 'timezone',
+          type: 'select',
+          label: 'Timezone',
+          defaultValue: 'UTC',
+          options: TIMEZONE_OPTIONS.map((value) => ({ label: value, value })),
+          admin: {
+            description:
+              'Timezone used for public timestamps, history weeks, and admin date pickers. Visitors see this timezone, not their own.',
+          },
+        },
+        {
+          name: 'locale',
+          type: 'text',
+          label: 'Locale',
+          defaultValue: 'en-US',
+          admin: {
+            description:
+              'BCP 47 locale for date and time formatting (e.g. en-US, de-DE, fr-FR). Controls 12-hour vs 24-hour clocks.',
+          },
+        },
+        {
+          name: 'weekStartsOn',
+          type: 'select',
+          label: 'Week starts on',
+          defaultValue: 'monday',
+          options: [
+            { label: 'Monday', value: 'monday' },
+            { label: 'Sunday', value: 'sunday' },
+          ],
+          admin: {
+            description:
+              'First day of the week for incident history and admin date pickers.',
           },
         },
       ],

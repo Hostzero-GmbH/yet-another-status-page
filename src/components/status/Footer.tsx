@@ -1,29 +1,41 @@
 'use client'
 
 import { RichText } from '@/components/RichText'
+import { DEFAULT_TIMEZONE, formatTimezoneNotice } from '@/lib/datetime'
 
 interface FooterProps {
   footerText: unknown
+  timezone?: string | null
 }
 
-export function Footer({ footerText }: FooterProps) {
-  // Check if rich text has content
-  const hasContent = footerText && 
-    typeof footerText === 'object' && 
-    (footerText as { root?: { children?: unknown[] } }).root?.children?.length
+// An empty editor still saves a root with one empty paragraph, so look for actual text.
+function hasRichTextContent(node: unknown): boolean {
+  if (!node || typeof node !== 'object') return false
+  const n = node as { text?: string; children?: unknown[] }
+  if (typeof n.text === 'string' && n.text.trim().length > 0) return true
+  return Array.isArray(n.children) && n.children.some(hasRichTextContent)
+}
+
+export function Footer({ footerText, timezone }: FooterProps) {
+  const hasContent = hasRichTextContent((footerText as { root?: unknown } | null)?.root)
 
   return (
     <footer className="border-t border-border bg-card py-6">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          {hasContent ? (
-            <RichText content={footerText} className="text-sm text-muted-foreground [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary/80 [&_p]:mb-0" />
-          ) : null}
+          <div className="flex min-w-0 flex-col items-center gap-1 text-center sm:items-start sm:text-left">
+            {hasContent ? (
+              <RichText content={footerText} className="text-sm text-muted-foreground [&_strong]:font-semibold [&_strong]:text-foreground [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary/80 [&_p]:mb-0" />
+            ) : null}
+            <p className="text-xs text-muted-foreground/80">
+              {formatTimezoneNotice(timezone || DEFAULT_TIMEZONE)}
+            </p>
+          </div>
           <a
             href="https://github.com/Hostzero-GmbH/yet-another-status-page"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             aria-label="View source on GitHub"
           >
             <svg

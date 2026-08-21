@@ -148,6 +148,21 @@ Access **Configuration → Site Settings** to configure:
 - **Logos**: Light and dark theme logos
 - **SEO**: Meta titles and descriptions
 - **Status Override**: Maintenance mode and custom messages
+- **Localization**: Timezone, locale, and week start (see below)
+
+#### Localization
+
+These settings control the **admin calendar** and the **site clock** visitors see.
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Timezone | IANA timezone for timestamps, history week boundaries, and admin date pickers | `UTC` |
+| Locale | BCP 47 locale for date/time formatting (e.g. `en-US`, `de-DE`, `fr-FR`) | `en-US` |
+| Week starts on | First day of the week for incident history and admin date pickers | Monday |
+
+Public pages always show the **site timezone**, not the visitor’s local time, so “maintenance at 15:00” means the same instant for everyone. A footer notice explains this (for example: “All times in Europe/Berlin. This is the status page timezone.”). Individual timestamps also include a short zone abbreviation.
+
+Admin date pickers use the same timezone, locale, and week start, so times you enter match what visitors see.
 
 ### Email Settings
 

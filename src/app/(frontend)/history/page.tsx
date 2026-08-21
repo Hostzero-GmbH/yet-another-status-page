@@ -1,25 +1,10 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { addZonedDays, formatDateSlug, getWeekStart, resolveDateTimeConfig } from '@/lib/datetime'
 import { getSettings } from '@/lib/payload'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-function getMonday(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-function formatDateSlug(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
@@ -47,12 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HistoryPage() {
-  // Redirect to previous week (current week is shown on the main page)
-  const today = new Date()
-  const monday = getMonday(today)
-  const previousMonday = new Date(monday)
-  previousMonday.setDate(previousMonday.getDate() - 7)
-  const weekSlug = formatDateSlug(previousMonday)
-  
-  redirect(`/history/${weekSlug}`)
+  const settings = await getSettings()
+  const dt = resolveDateTimeConfig(settings)
+  const weekStart = getWeekStart(new Date(), dt.weekStartsOn, dt.timezone)
+  const previousWeekStart = addZonedDays(weekStart, -7, dt.timezone)
+  redirect(`/history/${formatDateSlug(previousWeekStart, dt.timezone)}`)
 }

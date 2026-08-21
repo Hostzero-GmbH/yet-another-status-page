@@ -36,7 +36,7 @@ The admin panel is organized into sections:
 
 ### Configuration
 
-- **Site Settings** - Site name, branding, SEO, status overrides
+- **Site Settings** - Site name, branding, SEO, status overrides, localization
 - **Email Settings** - SMTP configuration and email subscriptions
 - **SMS Settings** - Twilio configuration, SMS subscriptions, and message templates
 

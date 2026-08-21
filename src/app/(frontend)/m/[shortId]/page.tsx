@@ -10,24 +10,13 @@ import { CopyLinkButton } from '@/components/status/CopyLinkButton'
 import { MaintenanceUpdatesTimeline } from '@/components/status/MaintenanceUpdatesTimeline'
 import { RichText } from '@/components/RichText'
 import { cn, getMediaUrl } from '@/lib/utils'
+import { formatDateTime, resolveDateTimeConfig } from '@/lib/datetime'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 interface PageProps {
   params: Promise<{ shortId: string }>
-}
-
-function formatDateTime(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }) + ' at ' + date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  })
 }
 
 const statusConfig: Record<string, { label: string; className: string; icon: typeof Wrench }> = {
@@ -40,6 +29,7 @@ const statusConfig: Record<string, { label: string; className: string; icon: typ
 async function getMaintenanceData(shortId: string) {
   const payload = await getCachedPayload()
   const settings = await getSettings()
+  const dt = resolveDateTimeConfig(settings)
 
   const result = await payload.find({
     collection: 'maintenances',
@@ -70,7 +60,7 @@ async function getMaintenanceData(shortId: string) {
     id: `${maintenance.id}-update-${index}`,
     status: update.status,
     message: update.message || '',
-    dateTime: formatDateTime(new Date(update.createdAt)),
+    dateTime: formatDateTime(new Date(update.createdAt), dt),
   })).reverse()
 
   const affectedServices = (maintenance.affectedServices || []).map((s) => {
@@ -86,7 +76,7 @@ async function getMaintenanceData(shortId: string) {
       title: maintenance.title,
       description: maintenance.description,
       status: maintenance.status,
-      scheduledAt: formatDateTime(scheduledStart),
+      scheduledAt: formatDateTime(scheduledStart, dt),
       duration: durationText,
       affectedServices,
       updates,
@@ -198,7 +188,7 @@ export default async function MaintenancePage({ params }: PageProps) {
         <MaintenanceUpdatesTimeline updates={maintenance.updates} />
       </main>
 
-      <Footer footerText={settings.footerText} />
+      <Footer footerText={settings.footerText} timezone={settings.timezone} />
     </div>
   )
 }

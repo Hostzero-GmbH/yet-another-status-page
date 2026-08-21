@@ -2,6 +2,8 @@ import type { CollectionConfig } from 'payload'
 import { generateShortId } from '@/lib/shortId'
 import { standardAccess } from '@/lib/access'
 import { getServerUrl } from '@/lib/utils'
+import { formatNotificationDateTime, resolveDateTimeConfig } from '@/lib/datetime'
+import { localizedDateAdmin } from '@/lib/localizedDateAdmin'
 
 export const maintenanceStatusOptions = [
   { label: 'Upcoming', value: 'upcoming' },
@@ -78,16 +80,12 @@ function persistScheduledStatus(id: number | string, status: MaintenanceStatus) 
   })
 }
 
-// Format scheduled times for notifications
-function formatDateTime(date: string | null | undefined): string | null {
+function formatScheduleTime(
+  date: string | null | undefined,
+  settings: { timezone?: string | null; locale?: string | null; weekStartsOn?: string | null } | null,
+): string | null {
   if (!date) return null
-  return new Date(date).toLocaleString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
+  return formatNotificationDateTime(new Date(date), resolveDateTimeConfig(settings))
 }
 
 // Deferred notification creation data
@@ -225,28 +223,22 @@ export const Maintenances: CollectionConfig = {
       type: 'date',
       label: 'Cancelled At',
       index: true,
-      admin: {
+      admin: localizedDateAdmin({
         position: 'sidebar',
         description: 'When the maintenance was cancelled',
         readOnly: true,
-        date: {
-          pickerAppearance: 'dayAndTime',
-        },
-      },
+      }),
     },
     {
       name: 'completedAt',
       type: 'date',
       label: 'Completed At',
       index: true,
-      admin: {
+      admin: localizedDateAdmin({
         position: 'sidebar',
         description: 'When the maintenance was completed',
         readOnly: true,
-        date: {
-          pickerAppearance: 'dayAndTime',
-        },
-      },
+      }),
     },
     {
       name: 'description',
@@ -272,23 +264,17 @@ export const Maintenances: CollectionConfig = {
       type: 'date',
       required: true,
       label: 'Scheduled Start',
-      admin: {
+      admin: localizedDateAdmin({
         description: 'When the maintenance is scheduled to start',
-        date: {
-          pickerAppearance: 'dayAndTime',
-        },
-      },
+      }),
     },
     {
       name: 'scheduledEndAt',
       type: 'date',
       label: 'Scheduled End',
-      admin: {
+      admin: localizedDateAdmin({
         description: 'When the maintenance is expected to end',
-        date: {
-          pickerAppearance: 'dayAndTime',
-        },
-      },
+      }),
     },
     {
       name: 'duration',
@@ -366,12 +352,9 @@ export const Maintenances: CollectionConfig = {
           type: 'date',
           required: true,
           defaultValue: () => new Date().toISOString(),
-          admin: {
+          admin: localizedDateAdmin({
             description: 'When this update was posted',
-            date: {
-              pickerAppearance: 'dayAndTime',
-            },
-          },
+          }),
         },
       ],
     },
@@ -446,8 +429,9 @@ export const Maintenances: CollectionConfig = {
         const title = doc.title || 'Maintenance'
         const shortId = doc.shortId || ''
         const statusLabel = statusLabels[doc.status] || doc.status || 'Update'
-        const startTimeStr = formatDateTime(doc.scheduledStartAt)
-        const endTimeStr = formatDateTime(doc.scheduledEndAt)
+        const settings = await req.payload.findGlobal({ slug: 'settings' })
+        const startTimeStr = formatScheduleTime(doc.scheduledStartAt, settings)
+        const endTimeStr = formatScheduleTime(doc.scheduledEndAt, settings)
 
         // Auto-create notification on new maintenance creation
         // Use setImmediate to defer until after the current transaction commits

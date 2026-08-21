@@ -1,39 +1,33 @@
 import { test, expect } from '@playwright/test'
 import { createIncident } from '../utils/payload-helpers'
+import {
+  DEFAULT_TIMEZONE,
+  DEFAULT_WEEK_STARTS_ON,
+  addZonedDays,
+  formatDateSlug,
+  getWeekStart,
+} from '../../src/lib/datetime'
 
 /**
  * History Page Tests
- * 
+ *
  * Tests for incident history navigation and week views.
- * Note: /history redirects to /history/[date] with previous week's Monday
+ * Note: /history redirects to /history/[date] with previous week's start
  * (current week is shown on the main status page).
  */
 
-function formatDateSlug(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+function getPreviousWeekStart(): Date {
+  const currentWeekStart = getWeekStart(new Date(), DEFAULT_WEEK_STARTS_ON, DEFAULT_TIMEZONE)
+  return addZonedDays(currentWeekStart, -7, DEFAULT_TIMEZONE)
 }
 
 function getPreviousWeekSlug(): string {
-  const today = new Date()
-  const day = today.getDay()
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1) // Monday of current week
-  today.setDate(diff)
-  today.setHours(0, 0, 0, 0)
-  today.setDate(today.getDate() - 7) // Go back one week
-  return formatDateSlug(today)
+  return formatDateSlug(getPreviousWeekStart(), DEFAULT_TIMEZONE)
 }
 
 function getPreviousWeekDate(): Date {
-  const today = new Date()
-  const day = today.getDay()
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1)
-  today.setDate(diff)
-  today.setDate(today.getDate() - 7) // Go back one week
-  today.setHours(12, 0, 0, 0) // Set to noon to avoid timezone issues
-  return today
+  const weekStart = getPreviousWeekStart()
+  return addZonedDays(weekStart, 3, DEFAULT_TIMEZONE)
 }
 
 test.describe('History Page', () => {
@@ -67,13 +61,8 @@ test.describe('History Page', () => {
   })
 
   test('redirects current week to previous week', async ({ page }) => {
-    // Calculate current week's Monday
-    const today = new Date()
-    const day = today.getDay()
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1)
-    today.setDate(diff)
-    today.setHours(0, 0, 0, 0)
-    const currentWeekSlug = formatDateSlug(today)
+    const currentWeekStart = getWeekStart(new Date(), DEFAULT_WEEK_STARTS_ON, DEFAULT_TIMEZONE)
+    const currentWeekSlug = formatDateSlug(currentWeekStart, DEFAULT_TIMEZONE)
     
     // Navigate to current week
     await page.goto(`/history/${currentWeekSlug}`)
@@ -110,13 +99,10 @@ test.describe('History Week Page', () => {
   })
 
   test('shows no incidents message when week is empty', async ({ page }) => {
-    // Navigate to a past date with no incidents
     const pastDate = new Date()
-    pastDate.setFullYear(pastDate.getFullYear() - 2)
-    const day = pastDate.getDay()
-    const diff = pastDate.getDate() - day + (day === 0 ? -6 : 1)
-    pastDate.setDate(diff)
-    const dateSlug = pastDate.toISOString().split('T')[0]
+    pastDate.setUTCFullYear(pastDate.getUTCFullYear() - 2)
+    const weekStart = getWeekStart(pastDate, DEFAULT_WEEK_STARTS_ON, DEFAULT_TIMEZONE)
+    const dateSlug = formatDateSlug(weekStart, DEFAULT_TIMEZONE)
     
     await page.goto(`/history/${dateSlug}`)
     

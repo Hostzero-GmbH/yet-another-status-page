@@ -9,6 +9,18 @@ import { Header } from '@/components/status/Header'
 import { Footer } from '@/components/status/Footer'
 import { IncidentTimelineWithLinks } from '@/components/status/IncidentTimeline'
 import { cn, getMediaUrl } from '@/lib/utils'
+import {
+  addZonedDays,
+  dateFromSlug,
+  endOfZonedDay,
+  formatDate,
+  formatDateSlug,
+  formatShortDate,
+  formatTime,
+  getWeekStart,
+  resolveDateTimeConfig,
+  startOfZonedDay,
+} from '@/lib/datetime'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -19,74 +31,19 @@ interface PageProps {
   params: Promise<{ date: string }>
 }
 
-function parseDate(dateSlug: string): Date | null {
-  const match = dateSlug.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  if (!match) return null
-  
-  const [, year, month, day] = match
-  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
-  
-  if (isNaN(date.getTime())) return null
-  if (date.getFullYear() !== parseInt(year)) return null
-  if (date.getMonth() !== parseInt(month) - 1) return null
-  if (date.getDate() !== parseInt(day)) return null
-  
-  return date
-}
-
-function getMonday(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
-function formatShortDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
-function formatDateSlug(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  })
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { date: dateSlug } = await params
-  const parsedDate = parseDate(dateSlug)
+  const settings = await getSettings()
+  const dt = resolveDateTimeConfig(settings)
+  const parsedDate = dateFromSlug(dateSlug, dt.timezone)
   
   if (!parsedDate) {
     return { title: 'Week Not Found' }
   }
   
-  const settings = await getSettings()
-  const monday = getMonday(parsedDate)
-  const sunday = new Date(monday)
-  sunday.setDate(sunday.getDate() + 6)
-  
-  const weekRange = `${formatShortDate(monday)} - ${formatShortDate(sunday)}`
+  const weekStart = getWeekStart(parsedDate, dt.weekStartsOn, dt.timezone)
+  const weekEnd = addZonedDays(weekStart, 6, dt.timezone)
+  const weekRange = `${formatShortDate(weekStart, dt)} - ${formatShortDate(weekEnd, dt)}`
   
   const titleTemplate = settings.historyMetaTitle || 'Incidents: {{date}} - {{siteName}}'
   const descriptionTemplate = settings.historyMetaDescription || 'Status updates and incidents for {{siteName}} during {{date}}'
@@ -107,30 +64,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 async function getWeekData(dateSlug: string) {
-  const parsedDate = parseDate(dateSlug)
+  const settings = await getSettings()
+  const dt = resolveDateTimeConfig(settings)
+  const parsedDate = dateFromSlug(dateSlug, dt.timezone)
   if (!parsedDate) return null
   
-  const monday = getMonday(parsedDate)
-  const sunday = new Date(monday)
-  sunday.setDate(sunday.getDate() + 6)
-  sunday.setHours(23, 59, 59, 999)
+  const weekStart = getWeekStart(parsedDate, dt.weekStartsOn, dt.timezone)
+  const weekEnd = addZonedDays(weekStart, 6, dt.timezone)
+  const rangeStart = startOfZonedDay(weekStart, dt.timezone)
+  const rangeEnd = endOfZonedDay(weekEnd, dt.timezone)
   
   const payload = await getCachedPayload()
-  const settings = await getSettings()
 
   const incidents = await payload.find({
     collection: 'incidents',
     where: {
       createdAt: {
-        greater_than_equal: monday.toISOString(),
-        less_than_equal: sunday.toISOString(),
+        greater_than_equal: rangeStart.toISOString(),
+        less_than_equal: rangeEnd.toISOString(),
       },
     },
     sort: '-createdAt',
     limit: 500,
   })
 
-  // Group incidents by day
   const incidentsByDay = new Map<string, { incidents: Array<{
     id: string;
     shortId: string;
@@ -145,21 +102,20 @@ async function getWeekData(dateSlug: string) {
   }>, dateSlug: string }>()
   
   for (let i = 0; i < 7; i++) {
-    const date = new Date(monday)
-    date.setDate(date.getDate() + i)
-    incidentsByDay.set(formatDate(date), { incidents: [], dateSlug: formatDateSlug(date) })
+    const date = addZonedDays(weekStart, i, dt.timezone)
+    incidentsByDay.set(formatDate(date, dt), { incidents: [], dateSlug: formatDateSlug(date, dt.timezone) })
   }
 
   incidents.docs.forEach((incident: Incident) => {
     const createdAt = new Date(incident.createdAt)
-    const dateKey = formatDate(createdAt)
+    const dateKey = formatDate(createdAt, dt)
 
     if (incidentsByDay.has(dateKey)) {
       const updates = (incident.updates || []).map((update: Incident['updates'][number], index: number) => ({
         id: `${incident.id}-update-${index}`,
         status: update.status as 'investigating' | 'identified' | 'monitoring' | 'resolved',
         message: update.message || '',
-        timestamp: formatTime(new Date(update.createdAt)),
+        timestamp: formatTime(new Date(update.createdAt), dt),
       })).reverse()
 
       incidentsByDay.get(dateKey)!.incidents.push({
@@ -176,30 +132,23 @@ async function getWeekData(dateSlug: string) {
     .map(([date, { incidents, dateSlug }]) => ({ date, dateSlug, incidents }))
     .reverse()
 
-  const prevMonday = new Date(monday)
-  prevMonday.setDate(prevMonday.getDate() - 7)
+  const prevWeekStart = addZonedDays(weekStart, -7, dt.timezone)
+  const nextWeekStart = addZonedDays(weekStart, 7, dt.timezone)
+  const currentWeekStart = getWeekStart(new Date(), dt.weekStartsOn, dt.timezone)
+  const previousWeekStart = addZonedDays(currentWeekStart, -7, dt.timezone)
   
-  const nextMonday = new Date(monday)
-  nextMonday.setDate(nextMonday.getDate() + 7)
-  
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const currentMonday = getMonday(today)
-  
-  // Don't allow navigating to current week (it's shown on the main page)
-  const isCurrentWeek = formatDateSlug(monday) === formatDateSlug(currentMonday)
-  const hasNextWeek = nextMonday < currentMonday
-  const previousMonday = new Date(currentMonday.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const isCurrentWeek = formatDateSlug(weekStart, dt.timezone) === formatDateSlug(currentWeekStart, dt.timezone)
+  const hasNextWeek = nextWeekStart < currentWeekStart
 
   return {
     settings,
-    weekStart: formatShortDate(monday),
-    weekEnd: formatShortDate(sunday),
+    weekStart: formatShortDate(weekStart, dt),
+    weekEnd: formatShortDate(weekEnd, dt),
     incidents: weekIncidents,
-    prevWeekSlug: formatDateSlug(prevMonday),
-    nextWeekSlug: hasNextWeek ? formatDateSlug(nextMonday) : null,
+    prevWeekSlug: formatDateSlug(prevWeekStart, dt.timezone),
+    nextWeekSlug: hasNextWeek ? formatDateSlug(nextWeekStart, dt.timezone) : null,
     isCurrentWeek,
-    previousWeekSlug: formatDateSlug(previousMonday),
+    previousWeekSlug: formatDateSlug(previousWeekStart, dt.timezone),
   }
 }
 
@@ -301,7 +250,7 @@ export default async function WeekPage({ params }: PageProps) {
         </div>
       </main>
 
-      <Footer footerText={settings.footerText} />
+      <Footer footerText={settings.footerText} timezone={settings.timezone} />
     </div>
   )
 }
