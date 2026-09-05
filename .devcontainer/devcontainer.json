@@ -22,10 +22,7 @@
   "remoteUser": "node",
   "customizations": {
     "vscode": {
-      "extensions": [
-        "dbaeumer.vscode-eslint",
-        "bradlc.vscode-tailwindcss"
-      ]
+      "extensions": ["dbaeumer.vscode-eslint", "bradlc.vscode-tailwindcss"]
     }
   }
 }

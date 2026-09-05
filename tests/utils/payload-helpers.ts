@@ -67,6 +67,30 @@ interface Subscriber {
   active: boolean
 }
 
+interface IncidentTemplate {
+  id: number
+  name: string
+  title: string
+  affectedServices?: number[]
+  updates?: Array<{
+    status: string
+    message: string
+    createdAt: string
+  }>
+}
+
+interface MaintenanceTemplate {
+  id: number
+  name: string
+  title: string
+  description?: unknown
+  affectedServices?: number[]
+  duration?: string
+  autoStartOnSchedule?: boolean
+  autoCompleteOnSchedule?: boolean
+  status?: string
+}
+
 /**
  * Create a service group
  */
@@ -198,6 +222,98 @@ export async function createMaintenance(data: {
   
   const result = await response.json()
   return result.doc
+}
+
+/**
+ * Create an incident template (admin-only collection, writable in test mode).
+ */
+export async function createIncidentTemplate(data: {
+  name: string
+  title: string
+  affectedServices?: number[]
+  updates?: Array<{ status: string; message: string }>
+}): Promise<IncidentTemplate> {
+  const response = await fetch(`${API_BASE}/api/incident-templates`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: data.name,
+      title: data.title,
+      affectedServices: data.affectedServices || [],
+      updates: data.updates || [],
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Failed to create incident template: ${response.status} ${response.statusText} - ${errorBody}`)
+  }
+
+  const result = await response.json()
+  return result.doc
+}
+
+/**
+ * Create a maintenance template (admin-only collection, writable in test mode).
+ */
+export async function createMaintenanceTemplate(data: {
+  name: string
+  title: string
+  description?: unknown
+  affectedServices?: number[]
+  duration?: string
+  autoStartOnSchedule?: boolean
+  autoCompleteOnSchedule?: boolean
+  status?: string
+}): Promise<MaintenanceTemplate> {
+  const response = await fetch(`${API_BASE}/api/maintenance-templates`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: data.name,
+      title: data.title,
+      description: data.description,
+      affectedServices: data.affectedServices || [],
+      duration: data.duration,
+      autoStartOnSchedule: data.autoStartOnSchedule,
+      autoCompleteOnSchedule: data.autoCompleteOnSchedule,
+      status: data.status || 'upcoming',
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Failed to create maintenance template: ${response.status} ${response.statusText} - ${errorBody}`)
+  }
+
+  const result = await response.json()
+  return result.doc
+}
+
+/**
+ * List incident templates (admin-only collection, readable in test mode).
+ */
+export async function listIncidentTemplates(): Promise<IncidentTemplate[]> {
+  const response = await fetch(`${API_BASE}/api/incident-templates?limit=100&depth=0`)
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Failed to list incident templates: ${response.status} ${response.statusText} - ${errorBody}`)
+  }
+  const result = await response.json()
+  return result.docs || []
+}
+
+/**
+ * List maintenance templates (admin-only collection, readable in test mode).
+ */
+export async function listMaintenanceTemplates(): Promise<MaintenanceTemplate[]> {
+  const response = await fetch(`${API_BASE}/api/maintenance-templates?limit=100&depth=0`)
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Failed to list maintenance templates: ${response.status} ${response.statusText} - ${errorBody}`)
+  }
+  const result = await response.json()
+  return result.docs || []
 }
 
 /**

@@ -9,6 +9,7 @@ End-to-end tests using Playwright to test the full application.
 ### Test Environment Architecture
 
 Tests run in an **isolated Docker environment** to ensure:
+
 - ✅ Clean database for each test run
 - ✅ No interference with development data
 - ✅ Consistent, reproducible results
@@ -68,7 +69,7 @@ When you run `npm run test:e2e`:
 2. **Seed Script** runs to create test data:
    - Service groups and services
    - Sample incidents and maintenances
-   
+
 3. **Playwright** executes tests against `http://localhost:3001`
 
 4. **Cleanup** - All Docker containers and volumes are removed
@@ -100,6 +101,7 @@ tests/
 │   ├── subscribe.spec.ts        # Subscription flows (10 tests)
 │   ├── theme-toggle.spec.ts     # Dark/light mode (5 tests)
 │   ├── history-page.spec.ts     # Incident history (6 tests)
+│   ├── templates.spec.ts        # Incident & Maintenance templates (9 tests)
 │   ├── admin.spec.ts            # Admin panel (skipped - slow to compile)
 │   └── api.spec.ts              # API endpoints (7 tests)
 ├── seed/
@@ -115,29 +117,26 @@ tests/
 Use the Payload REST API helpers in your tests:
 
 ```typescript
-import { 
-  createServiceGroup, 
-  createService,
-  createIncident 
-} from '../utils/payload-helpers'
+import { createServiceGroup, createService, createIncident } from "../utils/payload-helpers";
 
-test('my test', async ({ page }) => {
+test("my test", async ({ page }) => {
   // Create test data
-  const group = await createServiceGroup({ name: 'Test Group' })
-  const service = await createService({ 
-    name: 'Test Service', 
-    group: group.id 
-  })
-  
+  const group = await createServiceGroup({ name: "Test Group" });
+  const service = await createService({
+    name: "Test Service",
+    group: group.id,
+  });
+
   // Use the data in your test
-  await page.goto('/')
-  await expect(page.getByText('Test Service')).toBeVisible()
-})
+  await page.goto("/");
+  await expect(page.getByText("Test Service")).toBeVisible();
+});
 ```
 
 ### CI/CD Integration
 
 The GitHub Actions workflow (`.github/workflows/e2e-tests.yml`) runs tests automatically on:
+
 - Push to `main`
 - Pull requests to `main`
 
@@ -146,11 +145,13 @@ Test artifacts (reports, screenshots) are uploaded on failure for debugging.
 ### Debugging Failed Tests
 
 1. **View the test report**:
+
    ```bash
    npm run test:e2e:report
    ```
 
 2. **Run in debug mode**:
+
    ```bash
    npm run test:e2e:debug
    ```
@@ -161,8 +162,8 @@ Test artifacts (reports, screenshots) are uploaded on failure for debugging.
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PLAYWRIGHT_BASE_URL` | Application URL | `http://localhost:3001` |
-| `PAYLOAD_PUBLIC_ALLOW_WRITES` | Allow unauthenticated writes | `false` |
-| `CI` | Disable webServer reuse | (unset) |
+| Variable                      | Description                  | Default                 |
+| ----------------------------- | ---------------------------- | ----------------------- |
+| `PLAYWRIGHT_BASE_URL`         | Application URL              | `http://localhost:3001` |
+| `PAYLOAD_PUBLIC_ALLOW_WRITES` | Allow unauthenticated writes | `false`                 |
+| `CI`                          | Disable webServer reuse      | (unset)                 |
