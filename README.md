@@ -41,6 +41,7 @@ Password: demo2026#
 - **Scheduled Maintenance** — Plan and notify users about upcoming maintenance windows
 - **Email & SMS Notifications** — Automatic subscriber notifications via SMTP and Twilio
 - **Service Groups** — Organize services into logical groups
+- **Public API & Feeds** — Versioned read-only JSON API with OpenAPI reference, Atom feed and iCalendar maintenance feed
 - **Beautiful UI** — Modern, responsive status page with dark mode support
 - **Self-Hosted** — Full control over your data and infrastructure
 - **Docker Ready** — Easy deployment with Docker and Docker Compose
@@ -96,7 +97,7 @@ configuration, security considerations, and Kubernetes/Helm deployment notes.
 - [Configuration](https://docs.yasp.io/getting-started/configuration.html)
 - [Demo Mode](docs/src/getting-started/demo-mode.md)
 - [Admin Guide](https://docs.yasp.io/admin/overview.html)
-- [API Reference](https://docs.yasp.io/api/rest.html)
+- [API Reference](https://docs.yasp.io/api/overview.html)
 - [Local Development](https://docs.yasp.io/development/local-setup.html)
 
 ## Tech Stack

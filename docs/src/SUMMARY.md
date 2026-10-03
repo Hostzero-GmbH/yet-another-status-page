@@ -26,4 +26,7 @@
 
 # API Reference
 
-- [REST API](./api/rest.md)
+- [Overview](./api/overview.md)
+- [Public API](./api/public-api.md)
+- [Feeds](./api/feeds.md)
+- [Payload REST & GraphQL](./api/payload-rest.md)

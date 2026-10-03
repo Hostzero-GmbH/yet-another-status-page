@@ -1,0 +1,22 @@
+# Status page
+
+This site is a status page built with Yet Another Status Page. Current service status, incidents and maintenance windows are available in machine-readable form.
+
+## Public API (read-only, no authentication)
+
+- OpenAPI 3.1 specification: /api/v1/openapi.json
+- Current overall status, services, unresolved incidents, upcoming maintenances: /api/v1/status
+- Incidents: /api/v1/incidents (filter with ?status=active)
+- Maintenances: /api/v1/maintenances (filter with ?status=active)
+- Services: /api/v1/services
+
+All timestamps are ISO 8601 UTC. Errors are RFC 9457 problem details.
+
+## Feeds
+
+- Atom feed of incident and maintenance updates: /feed.atom
+- iCalendar feed of maintenance windows: /maintenances.ics
+
+## Documentation
+
+- https://docs.yasp.io/api/overview.html

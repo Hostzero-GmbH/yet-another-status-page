@@ -196,29 +196,3 @@ export function RichText({ content, className }: RichTextProps) {
     </div>
   );
 }
-
-// Helper to extract plain text (for meta descriptions, etc.)
-export function extractPlainText(content: unknown): string {
-  if (!content || typeof content !== "object") return "";
-
-  const lexical = content as LexicalRoot;
-  if (!lexical.root?.children) return "";
-
-  function extractFromNode(node: LexicalNode): string {
-    if (node.type === "text") {
-      return node.text || "";
-    }
-    if (node.type === "linebreak") {
-      return "\n";
-    }
-    if (node.children) {
-      return node.children.map(extractFromNode).join("");
-    }
-    return "";
-  }
-
-  return lexical.root.children
-    .map((node) => extractFromNode(node))
-    .join("\n")
-    .trim();
-}
