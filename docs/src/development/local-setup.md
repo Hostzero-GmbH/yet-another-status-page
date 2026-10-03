@@ -9,13 +9,13 @@ This guide explains how to set up Yet Another Status Page for local development.
 
 ## Dev Container (recommended)
 
-The repo includes a [Dev Container](https://containers.dev/) that provides Node.js 24 and PostgreSQL 16. You do not need Compose or a host Postgres install.
+The repo includes a [Dev Container](https://containers.dev/) that provides Node.js 24 and runs PostgreSQL 18 as a sidecar container. You do not need a host Postgres install.
 
 1. Clone the repository
 2. Open the folder in Cursor or VS Code
 3. Reopen in Container when prompted (or run **Dev Containers: Reopen in Container**)
 
-On first create the container installs dependencies, creates the `hostzero_status` database, and runs migrations.
+On first create the container installs dependencies and runs migrations. The `hostzero_status` database is created by the Postgres container.
 
 ```bash
 npm run dev
@@ -29,12 +29,12 @@ Visit:
 Environment defaults inside the container:
 
 ```env
-DATABASE_URI=postgresql://postgres:postgres@127.0.0.1:5432/hostzero_status
+DATABASE_URI=postgresql://postgres:postgres@postgres:5432/hostzero_status
 PAYLOAD_SECRET=dev-secret-key-change-in-production
 SERVER_URL=http://localhost:3000
 ```
 
-A `.env` is created from `.env.example` if you do not already have one.
+A `.env` is created from `.env.example` if you do not already have one. Container environment variables take precedence over `.env`, so the `localhost` database URI in `.env.example` is ignored inside the container. Postgres is also forwarded to `localhost:5432` on the host.
 
 ## Manual Setup
 
