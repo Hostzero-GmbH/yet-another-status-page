@@ -53,7 +53,8 @@ export const SmsSettings: GlobalConfig = {
               },
             ],
             beforeChange: [
-              ({ value, originalDoc }) => {
+              ({ value, originalDoc, context }) => {
+                if (context?.demoReset) return value
                 // If empty or masked placeholder, keep the existing value
                 if ((!value || value === '••••••••') && originalDoc?.twilioAuthToken) {
                   return originalDoc.twilioAuthToken

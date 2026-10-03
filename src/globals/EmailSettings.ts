@@ -84,7 +84,8 @@ export const EmailSettings: GlobalConfig = {
               },
             ],
             beforeChange: [
-              ({ value, originalDoc }) => {
+              ({ value, originalDoc, context }) => {
+                if (context?.demoReset) return value
                 // If empty or masked placeholder, keep the existing value
                 if ((!value || value === '••••••••') && originalDoc?.smtpPassword) {
                   return originalDoc.smtpPassword

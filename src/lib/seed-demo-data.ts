@@ -1,4 +1,25 @@
-import type { Payload } from 'payload'
+import type { GlobalSlug, Payload } from 'payload'
+
+/**
+ * Resets a global to its field defaults, then applies `overrides`.
+ * `context.demoReset` lets secret-preserving beforeChange hooks accept empty values.
+ * Assumes static `defaultValue`s (no function defaults) on globals.
+ */
+async function resetGlobal(payload: Payload, slug: GlobalSlug, overrides: Record<string, unknown> = {}) {
+  const config = payload.globals.config.find((g) => g.slug === slug)
+  if (!config) throw new Error(`Unknown global: ${slug}`)
+
+  const data: Record<string, unknown> = {}
+  for (const field of config.flattenedFields) {
+    data[field.name] = 'defaultValue' in field && field.defaultValue !== undefined ? field.defaultValue : null
+  }
+
+  await payload.updateGlobal({
+    slug,
+    data: { ...data, ...overrides },
+    context: { demoReset: true },
+  })
+}
 
 export async function seedDemoData(payload: Payload) {
   console.log('⚠️  ========================================')
@@ -14,6 +35,7 @@ export async function seedDemoData(payload: Payload) {
     await payload.delete({ collection: 'services', where: {} })
     await payload.delete({ collection: 'service-groups', where: {} })
     await payload.delete({ collection: 'subscribers', where: {} })
+    await payload.delete({ collection: 'media', where: {} })
     
     console.log('👥 Resetting users (keeping demo user only)...')
     const demoEmail = process.env.DEMO_USER_EMAIL || 'demo@yasp.io'
@@ -95,18 +117,16 @@ export async function seedDemoData(payload: Payload) {
       })
     }
 
-    console.log('⚙️  Updating settings...')
-    await payload.updateGlobal({
-      slug: 'settings',
-      data: {
-        siteName: 'YASP Demo',
-        siteDescription: 'Live demo of Yet Another Status Page - Try all features!',
-        maintenanceModeEnabled: false,
-        logoLight: logoMedia?.id || undefined,
-        logoDark: logoMedia?.id || undefined,
-        favicon: faviconMedia?.id || undefined,
-      },
+    console.log('⚙️  Resetting settings...')
+    await resetGlobal(payload, 'settings', {
+      siteName: 'YASP Demo',
+      siteDescription: 'Live demo of Yet Another Status Page - Try all features!',
+      logoLight: logoMedia?.id ?? null,
+      logoDark: logoMedia?.id ?? null,
+      favicon: faviconMedia?.id ?? null,
     })
+    await resetGlobal(payload, 'email-settings')
+    await resetGlobal(payload, 'sms-settings')
 
     console.log('📁 Creating service groups...')
     const apiGroup = await payload.create({

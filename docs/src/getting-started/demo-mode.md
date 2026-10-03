@@ -210,10 +210,11 @@ hooks: {
 ### Database Reset
 
 The reset process:
-1. Clears all user-generated data (incidents, services, etc.)
+1. Clears all user-generated data (incidents, services, subscribers, media, etc.)
 2. Preserves the demo user account
-3. Re-seeds with fresh demo data
-4. Logs the operation with timestamp
+3. Resets Site, Email and SMS settings to their defaults (including SMTP/Twilio credentials)
+4. Re-seeds with fresh demo data
+5. Logs the operation with timestamp
 
 **Reset Logs:**
 ```
