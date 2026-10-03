@@ -1,56 +1,67 @@
-import type { CollectionConfig } from 'payload'
-import { generateShortId } from '@/lib/shortId'
-import { standardAccess } from '@/lib/access'
-import { getServerUrl } from '@/lib/utils'
-import { formatNotificationDateTime, resolveDateTimeConfig } from '@/lib/datetime'
-import { localizedDateAdmin } from '@/lib/localizedDateAdmin'
+import type { CollectionConfig } from "payload";
+import { generateShortId } from "@/lib/shortId";
+import { standardAccess } from "@/lib/access";
+import { getServerUrl } from "@/lib/utils";
+import { formatNotificationDateTime, resolveDateTimeConfig } from "@/lib/datetime";
+import { localizedDateAdmin } from "@/lib/localizedDateAdmin";
+import { maintenanceFields, statusField, updatesField } from "@/fields/maintenanceFields";
 
 export const maintenanceStatusOptions = [
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'In Progress', value: 'in_progress' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Cancelled', value: 'cancelled' },
-] as const
+  { label: "Upcoming", value: "upcoming" },
+  { label: "In Progress", value: "in_progress" },
+  { label: "Completed", value: "completed" },
+  { label: "Cancelled", value: "cancelled" },
+] as const;
 
-export type MaintenanceStatus = (typeof maintenanceStatusOptions)[number]['value']
+export type MaintenanceStatus = (typeof maintenanceStatusOptions)[number]["value"];
 
 // Valid status transitions for auto-update
 const validTransitions: Record<MaintenanceStatus, MaintenanceStatus[]> = {
-  upcoming: ['in_progress', 'completed'],
-  in_progress: ['completed'],
+  upcoming: ["in_progress", "completed"],
+  in_progress: ["completed"],
   completed: [], // Terminal state
   cancelled: [], // Terminal state
-}
+};
 
 function canTransition(from: MaintenanceStatus, to: MaintenanceStatus): boolean {
-  return validTransitions[from]?.includes(to) ?? false
+  return validTransitions[from]?.includes(to) ?? false;
 }
 
 interface ScheduleFields {
-  status?: MaintenanceStatus | string | null
-  scheduledStartAt?: string | null
-  scheduledEndAt?: string | null
-  autoStartOnSchedule?: boolean | null
-  autoCompleteOnSchedule?: boolean | null
+  status?: MaintenanceStatus | string | null;
+  scheduledStartAt?: string | null;
+  scheduledEndAt?: string | null;
+  autoStartOnSchedule?: boolean | null;
+  autoCompleteOnSchedule?: boolean | null;
 }
 
 /** The status the schedule dictates right now, or null when no transition applies. */
 function resolveScheduledStatus(doc: ScheduleFields, now = new Date()): MaintenanceStatus | null {
-  const current = doc.status as MaintenanceStatus
-  const startTime = doc.scheduledStartAt ? new Date(doc.scheduledStartAt) : null
-  const endTime = doc.scheduledEndAt ? new Date(doc.scheduledEndAt) : null
+  const current = doc.status as MaintenanceStatus;
+  const startTime = doc.scheduledStartAt ? new Date(doc.scheduledStartAt) : null;
+  const endTime = doc.scheduledEndAt ? new Date(doc.scheduledEndAt) : null;
 
   // Auto-complete takes priority over auto-start
-  if (doc.autoCompleteOnSchedule && endTime && now >= endTime && canTransition(current, 'completed')) {
-    return 'completed'
+  if (
+    doc.autoCompleteOnSchedule &&
+    endTime &&
+    now >= endTime &&
+    canTransition(current, "completed")
+  ) {
+    return "completed";
   }
-  if (doc.autoStartOnSchedule && startTime && now >= startTime && canTransition(current, 'in_progress')) {
-    return 'in_progress'
+  if (
+    doc.autoStartOnSchedule &&
+    startTime &&
+    now >= startTime &&
+    canTransition(current, "in_progress")
+  ) {
+    return "in_progress";
   }
-  return null
+  return null;
 }
 
-const pendingScheduleWrites = new Set<number | string>()
+const pendingScheduleWrites = new Set<number | string>();
 
 /**
  * Persists a schedule transition detected while reading. The write is deferred onto a
@@ -58,95 +69,102 @@ const pendingScheduleWrites = new Set<number | string>()
  * that has not committed the row yet (e.g. the read that Payload performs during `create`).
  */
 function persistScheduledStatus(id: number | string, status: MaintenanceStatus) {
-  if (pendingScheduleWrites.has(id)) return
-  pendingScheduleWrites.add(id)
+  if (pendingScheduleWrites.has(id)) return;
+  pendingScheduleWrites.add(id);
 
   setImmediate(async () => {
     try {
-      const { getPayload } = await import('payload')
-      const config = (await import('@payload-config')).default
-      const payload = await getPayload({ config })
+      const { getPayload } = await import("payload");
+      const config = (await import("@payload-config")).default;
+      const payload = await getPayload({ config });
       await payload.update({
-        collection: 'maintenances',
+        collection: "maintenances",
         id,
         data: { status },
         context: { skipAutoStatusUpdate: true },
-      })
+      });
     } catch (error) {
-      console.error('[Maintenances] Failed to persist scheduled status:', error)
+      console.error("[Maintenances] Failed to persist scheduled status:", error);
     } finally {
-      pendingScheduleWrites.delete(id)
+      pendingScheduleWrites.delete(id);
     }
-  })
+  });
 }
 
 function formatScheduleTime(
   date: string | null | undefined,
-  settings: { timezone?: string | null; locale?: string | null; weekStartsOn?: string | null } | null,
+  settings: {
+    timezone?: string | null;
+    locale?: string | null;
+    weekStartsOn?: string | null;
+  } | null,
 ): string | null {
-  if (!date) return null
-  return formatNotificationDateTime(new Date(date), resolveDateTimeConfig(settings))
+  if (!date) return null;
+  return formatNotificationDateTime(new Date(date), resolveDateTimeConfig(settings));
 }
 
 // Deferred notification creation data
 interface DeferredNotification {
-  docId: number | string
-  title: string
-  shortId: string
-  statusLabel: string
-  isUpdate: boolean
-  updateIndex: number
-  startTimeStr: string | null
-  endTimeStr: string | null
-  duration: string | undefined
-  message?: string
+  docId: number | string;
+  title: string;
+  shortId: string;
+  statusLabel: string;
+  isUpdate: boolean;
+  updateIndex: number;
+  startTimeStr: string | null;
+  endTimeStr: string | null;
+  duration: string | undefined;
+  message?: string;
 }
 
 // Helper to interpolate template placeholders
 function interpolateTemplate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || '')
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] || "");
 }
 
 // Helper to create notification drafts for maintenances (deferred execution)
 async function createMaintenanceNotificationDeferred(data: DeferredNotification) {
   try {
     // Import payload dynamically to get a fresh instance outside the transaction
-    const { getPayload } = await import('payload')
-    const config = (await import('@payload-config')).default
-    const payload = await getPayload({ config })
-    
+    const { getPayload } = await import("payload");
+    const config = (await import("@payload-config")).default;
+    const payload = await getPayload({ config });
+
     // Fetch settings
-    const settings = await payload.findGlobal({ slug: 'settings' })
-    const smsSettings = await payload.findGlobal({ slug: 'sms-settings' })
-    const siteName = settings.siteName || 'Status'
-    const siteUrl = getServerUrl()
-    
+    const settings = await payload.findGlobal({ slug: "settings" });
+    const smsSettings = await payload.findGlobal({ slug: "sms-settings" });
+    const siteName = settings.siteName || "Status";
+    const siteUrl = getServerUrl();
+
     // Get max lengths from SMS settings
-    const titleMaxLength = smsSettings.templateTitleMaxLength || 50
-    const messageMaxLength = smsSettings.templateMessageMaxLength || 100
-    
+    const titleMaxLength = smsSettings.templateTitleMaxLength || 50;
+    const messageMaxLength = smsSettings.templateMessageMaxLength || 100;
+
     // Build schedule string for SMS (no newlines)
-    let scheduleStr = ''
+    let scheduleStr = "";
     if (data.startTimeStr && data.endTimeStr) {
-      scheduleStr = `📅 ${data.startTimeStr} - ${data.endTimeStr}`
+      scheduleStr = `📅 ${data.startTimeStr} - ${data.endTimeStr}`;
     } else if (data.startTimeStr) {
-      scheduleStr = `📅 ${data.startTimeStr}`
+      scheduleStr = `📅 ${data.startTimeStr}`;
       if (data.duration) {
-        scheduleStr += ` (${data.duration})`
+        scheduleStr += ` (${data.duration})`;
       }
     }
-    
+
     // Truncate title and message for SMS
-    const truncatedTitle = data.title.length > titleMaxLength
-      ? data.title.substring(0, titleMaxLength - 3) + '...'
-      : data.title
-    
-    const truncatedMessage = data.message 
-      ? (data.message.length > messageMaxLength ? data.message.substring(0, messageMaxLength - 3) + '...' : data.message)
-      : ''
-    
-    const url = `${siteUrl}/m/${data.shortId}`
-    
+    const truncatedTitle =
+      data.title.length > titleMaxLength
+        ? data.title.substring(0, titleMaxLength - 3) + "..."
+        : data.title;
+
+    const truncatedMessage = data.message
+      ? data.message.length > messageMaxLength
+        ? data.message.substring(0, messageMaxLength - 3) + "..."
+        : data.message
+      : "";
+
+    const url = `${siteUrl}/m/${data.shortId}`;
+
     const templateVars = {
       siteName,
       title: truncatedTitle,
@@ -154,288 +172,199 @@ async function createMaintenanceNotificationDeferred(data: DeferredNotification)
       schedule: scheduleStr,
       message: truncatedMessage,
       url,
-    }
-    
-    let smsBody: string
+    };
+
+    let smsBody: string;
     if (data.isUpdate) {
-      const template = smsSettings.templateMaintenanceUpdate || '[{{siteName}}] 🔧 {{title}} | {{status}} | {{schedule}} | {{message}} | {{url}}'
-      smsBody = interpolateTemplate(template, templateVars)
+      const template =
+        smsSettings.templateMaintenanceUpdate ||
+        "[{{siteName}}] 🔧 {{title}} | {{status}} | {{schedule}} | {{message}} | {{url}}";
+      smsBody = interpolateTemplate(template, templateVars);
     } else {
-      const template = smsSettings.templateMaintenanceNew || '[{{siteName}}] 🔧 MAINTENANCE: {{title}} | {{schedule}} | {{url}}'
-      smsBody = interpolateTemplate(template, templateVars)
+      const template =
+        smsSettings.templateMaintenanceNew ||
+        "[{{siteName}}] 🔧 MAINTENANCE: {{title}} | {{schedule}} | {{url}}";
+      smsBody = interpolateTemplate(template, templateVars);
     }
-    
+
     const emailBody = data.isUpdate
-      ? `Maintenance Status: ${data.statusLabel}\n\n${data.message || ''}\n\nView full details: ${url}`
-      : `A maintenance window has been scheduled.\n\nScheduled Start: ${data.startTimeStr || 'TBD'}\n${data.endTimeStr ? `Scheduled End: ${data.endTimeStr}\n` : ''}${data.duration ? `Expected Duration: ${data.duration}\n` : ''}\nWe will notify you when the maintenance begins and completes.\n\nView full details: ${url}`
-    
+      ? `Maintenance Status: ${data.statusLabel}\n\n${data.message || ""}\n\nView full details: ${url}`
+      : `A maintenance window has been scheduled.\n\nScheduled Start: ${data.startTimeStr || "TBD"}\n${data.endTimeStr ? `Scheduled End: ${data.endTimeStr}\n` : ""}${data.duration ? `Expected Duration: ${data.duration}\n` : ""}\nWe will notify you when the maintenance begins and completes.\n\nView full details: ${url}`;
+
     const notification = await payload.create({
-      collection: 'notifications',
+      collection: "notifications",
       data: {
-        title: data.isUpdate ? `[Maintenance ${data.statusLabel}] ${data.title}` : `[Scheduled Maintenance] ${data.title}`,
-        relatedMaintenance: typeof data.docId === 'string' ? parseInt(data.docId, 10) : data.docId,
+        title: data.isUpdate
+          ? `[Maintenance ${data.statusLabel}] ${data.title}`
+          : `[Scheduled Maintenance] ${data.title}`,
+        relatedMaintenance: typeof data.docId === "string" ? parseInt(data.docId, 10) : data.docId,
         updateIndex: data.updateIndex,
-        channel: 'both',
-        status: 'draft',
-        subject: data.isUpdate ? `[Maintenance ${data.statusLabel}] ${data.title}` : `[Scheduled Maintenance] ${data.title}`,
+        channel: "both",
+        status: "draft",
+        subject: data.isUpdate
+          ? `[Maintenance ${data.statusLabel}] ${data.title}`
+          : `[Scheduled Maintenance] ${data.title}`,
         emailBody,
         smsBody,
       },
-    })
-    return notification
+    });
+    return notification;
   } catch (error) {
-    console.error('[Maintenances] Failed to create notification:', error)
+    console.error("[Maintenances] Failed to create notification:", error);
   }
 }
 
 export const Maintenances: CollectionConfig = {
-  slug: 'maintenances',
+  slug: "maintenances",
   admin: {
-    useAsTitle: 'title',
-    defaultColumns: ['title', 'shortId', 'status', 'scheduledStartAt', 'updatedAt'],
-    group: 'Status',
+    useAsTitle: "title",
+    defaultColumns: ["title", "shortId", "status", "scheduledStartAt", "updatedAt"],
+    group: "Status",
   },
   access: standardAccess,
   fields: [
     {
-      name: 'title',
-      type: 'text',
-      required: true,
-      label: 'Maintenance Title',
+      name: "applyTemplate",
+      type: "ui",
       admin: {
-        description: 'A brief description of the maintenance (e.g., "Database Migration")',
+        components: {
+          Field: "@/components/admin/ApplyTemplateField#ApplyTemplateField",
+        },
+        position: "sidebar",
       },
     },
+    ...maintenanceFields,
     {
-      name: 'shortId',
-      type: 'text',
+      name: "shortId",
+      type: "text",
       unique: true,
       index: true,
-      label: 'Short ID',
+      label: "Short ID",
       admin: {
-        position: 'sidebar',
-        description: 'Auto-generated short ID for permalinks',
+        position: "sidebar",
+        description: "Auto-generated short ID for permalinks",
         readOnly: true,
       },
     },
     {
-      name: 'cancelledAt',
-      type: 'date',
-      label: 'Cancelled At',
+      name: "cancelledAt",
+      type: "date",
+      label: "Cancelled At",
       index: true,
       admin: localizedDateAdmin({
-        position: 'sidebar',
-        description: 'When the maintenance was cancelled',
+        position: "sidebar",
+        description: "When the maintenance was cancelled",
         readOnly: true,
       }),
     },
     {
-      name: 'completedAt',
-      type: 'date',
-      label: 'Completed At',
+      name: "completedAt",
+      type: "date",
+      label: "Completed At",
       index: true,
       admin: localizedDateAdmin({
-        position: 'sidebar',
-        description: 'When the maintenance was completed',
+        position: "sidebar",
+        description: "When the maintenance was completed",
         readOnly: true,
       }),
     },
     {
-      name: 'description',
-      type: 'richText',
-      label: 'Description',
-      admin: {
-        description: 'Detailed description of the maintenance work',
-      },
-      // Uses global editor config with FixedToolbarFeature
-    },
-    {
-      name: 'affectedServices',
-      type: 'relationship',
-      relationTo: 'services',
-      hasMany: true,
-      label: 'Affected Services',
-      admin: {
-        description: 'Services that will be affected by this maintenance',
-      },
-    },
-    {
-      name: 'scheduledStartAt',
-      type: 'date',
+      name: "scheduledStartAt",
+      type: "date",
       required: true,
-      label: 'Scheduled Start',
+      label: "Scheduled Start",
       admin: localizedDateAdmin({
-        description: 'When the maintenance is scheduled to start',
+        description: "When the maintenance is scheduled to start",
       }),
     },
     {
-      name: 'scheduledEndAt',
-      type: 'date',
-      label: 'Scheduled End',
+      name: "scheduledEndAt",
+      type: "date",
+      label: "Scheduled End",
       admin: localizedDateAdmin({
-        description: 'When the maintenance is expected to end',
+        description: "When the maintenance is expected to end",
       }),
     },
-    {
-      name: 'duration',
-      type: 'text',
-      label: 'Duration',
-      admin: {
-        description: 'Human-readable duration (e.g., "~2 hours")',
-      },
-    },
-    {
-      name: 'status',
-      type: 'select',
-      required: true,
-      defaultValue: 'upcoming',
-      options: [...maintenanceStatusOptions],
-      index: true,
-      admin: {
-        description:
-          'Derived from the latest entry in Updates, or auto-transitioned by schedule. Post an update to change status.',
-        readOnly: true,
-      },
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'autoStartOnSchedule',
-          type: 'checkbox',
-          defaultValue: true,
-          label: 'Auto-start on schedule',
-          admin: {
-            description: 'Automatically set to "In Progress" when start time is reached',
-            width: '50%',
-          },
-        },
-        {
-          name: 'autoCompleteOnSchedule',
-          type: 'checkbox',
-          defaultValue: true,
-          label: 'Auto-complete on schedule',
-          admin: {
-            description: 'Automatically set to "Completed" when end time is reached',
-            width: '50%',
-          },
-        },
-      ],
-    },
-    {
-      name: 'updates',
-      type: 'array',
-      label: 'Updates',
-      admin: {
-        description: 'Optional timeline of updates for this maintenance',
-      },
-      fields: [
-        {
-          name: 'status',
-          type: 'select',
-          required: true,
-          options: [...maintenanceStatusOptions],
-          admin: {
-            description: 'Status at the time of this update',
-          },
-        },
-        {
-          name: 'message',
-          type: 'textarea',
-          required: true,
-          admin: {
-            description: 'Update message',
-          },
-        },
-        {
-          name: 'createdAt',
-          type: 'date',
-          required: true,
-          defaultValue: () => new Date().toISOString(),
-          admin: localizedDateAdmin({
-            description: 'When this update was posted',
-          }),
-        },
-      ],
-    },
+    statusField({ readOnly: true }),
+    updatesField(),
   ],
   hooks: {
     beforeChange: [
       ({ data, operation, originalDoc, req }) => {
-        data = data || {}
+        data = data || {};
 
-        if (operation === 'create') {
-          data.shortId = generateShortId(8)
+        if (operation === "create") {
+          data.shortId = generateShortId(8);
         }
 
         // Sync top-level status from the latest update, except when the schedule
         // auto-transition is writing status directly without a corresponding update.
         if (!req?.context?.skipAutoStatusUpdate) {
-          const updates = data.updates as Array<{ status?: string }> | undefined
+          const updates = data.updates as Array<{ status?: string }> | undefined;
           if (updates && updates.length > 0) {
-            const latest = updates[updates.length - 1]
-            if (latest?.status) data.status = latest.status
+            const latest = updates[updates.length - 1];
+            if (latest?.status) data.status = latest.status;
           }
         }
 
         // Apply the schedule transition on write too, so a maintenance saved with an
         // already-elapsed start or end time is stored with the correct status right away.
-        const scheduledStatus = resolveScheduledStatus({ ...originalDoc, ...data })
+        const scheduledStatus = resolveScheduledStatus({ ...originalDoc, ...data });
         if (scheduledStatus) {
-          data.status = scheduledStatus
+          data.status = scheduledStatus;
         }
 
-        if (data.status === 'cancelled' && !data.cancelledAt) {
-          data.cancelledAt = new Date().toISOString()
-        } else if (data.status !== 'cancelled') {
-          data.cancelledAt = null
+        if (data.status === "cancelled" && !data.cancelledAt) {
+          data.cancelledAt = new Date().toISOString();
+        } else if (data.status !== "cancelled") {
+          data.cancelledAt = null;
         }
 
-        if (data.status === 'completed' && !data.completedAt) {
-          data.completedAt = new Date().toISOString()
-        } else if (data.status !== 'completed') {
-          data.completedAt = null
+        if (data.status === "completed" && !data.completedAt) {
+          data.completedAt = new Date().toISOString();
+        } else if (data.status !== "completed") {
+          data.completedAt = null;
         }
 
-        return data
+        return data;
       },
     ],
     afterRead: [
       ({ doc }) => {
-        if (!doc?.id) return doc
+        if (!doc?.id) return doc;
 
         // Catches schedules that elapsed since the last write. The reader always sees the
         // transitioned status; persisting it happens out of band.
-        const newStatus = resolveScheduledStatus(doc)
-        if (!newStatus) return doc
+        const newStatus = resolveScheduledStatus(doc);
+        if (!newStatus) return doc;
 
-        persistScheduledStatus(doc.id, newStatus)
-        return { ...doc, status: newStatus }
+        persistScheduledStatus(doc.id, newStatus);
+        return { ...doc, status: newStatus };
       },
     ],
     afterChange: [
       async ({ doc, operation, previousDoc, req }) => {
         // Skip if triggered by auto-status update or our own update
         if (req.context?.skipAutoStatusUpdate || req.context?.skipNotificationCreation) {
-          return doc
+          return doc;
         }
 
         const statusLabels: Record<string, string> = {
-          upcoming: 'Scheduled',
-          in_progress: 'In Progress',
-          completed: 'Completed',
-          cancelled: 'Cancelled',
-        }
-        const title = doc.title || 'Maintenance'
-        const shortId = doc.shortId || ''
-        const statusLabel = statusLabels[doc.status] || doc.status || 'Update'
-        const settings = await req.payload.findGlobal({ slug: 'settings' })
-        const startTimeStr = formatScheduleTime(doc.scheduledStartAt, settings)
-        const endTimeStr = formatScheduleTime(doc.scheduledEndAt, settings)
+          upcoming: "Scheduled",
+          in_progress: "In Progress",
+          completed: "Completed",
+          cancelled: "Cancelled",
+        };
+        const title = doc.title || "Maintenance";
+        const shortId = doc.shortId || "";
+        const statusLabel = statusLabels[doc.status] || doc.status || "Update";
+        const settings = await req.payload.findGlobal({ slug: "settings" });
+        const startTimeStr = formatScheduleTime(doc.scheduledStartAt, settings);
+        const endTimeStr = formatScheduleTime(doc.scheduledEndAt, settings);
 
         // Auto-create notification on new maintenance creation
         // Use setImmediate to defer until after the current transaction commits
-        if (operation === 'create') {
+        if (operation === "create") {
           const notificationData: DeferredNotification = {
             docId: doc.id,
             title,
@@ -446,25 +375,25 @@ export const Maintenances: CollectionConfig = {
             startTimeStr,
             endTimeStr,
             duration: doc.duration,
-          }
-          
+          };
+
           // Defer execution to after transaction commits
           setImmediate(() => {
-            createMaintenanceNotificationDeferred(notificationData).catch(console.error)
-          })
-          return doc
+            createMaintenanceNotificationDeferred(notificationData).catch(console.error);
+          });
+          return doc;
         }
 
         // Auto-create notifications for new updates
-        const currentUpdates = doc.updates || []
-        const previousUpdates = previousDoc?.updates || []
+        const currentUpdates = doc.updates || [];
+        const previousUpdates = previousDoc?.updates || [];
 
         for (let index = 0; index < currentUpdates.length; index++) {
-          const update = currentUpdates[index]
-          const isNewUpdate = index >= previousUpdates.length
+          const update = currentUpdates[index];
+          const isNewUpdate = index >= previousUpdates.length;
 
           if (isNewUpdate && update.message) {
-            const updateStatusLabel = statusLabels[update.status] || update.status || 'Update'
+            const updateStatusLabel = statusLabels[update.status] || update.status || "Update";
             const notificationData: DeferredNotification = {
               docId: doc.id,
               title,
@@ -476,17 +405,17 @@ export const Maintenances: CollectionConfig = {
               endTimeStr,
               duration: doc.duration,
               message: update.message,
-            }
-            
+            };
+
             // Defer execution to after transaction commits
             setImmediate(() => {
-              createMaintenanceNotificationDeferred(notificationData).catch(console.error)
-            })
+              createMaintenanceNotificationDeferred(notificationData).catch(console.error);
+            });
           }
         }
 
-        return doc
+        return doc;
       },
     ],
   },
-}
+};
