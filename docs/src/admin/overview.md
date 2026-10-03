@@ -31,7 +31,7 @@ The admin panel is organized into sections:
 
 ### Admin
 
-- **Users** - Admin user accounts (enable API keys here for programmatic access; see [REST API](../api/rest.md#api-keys))
+- **Users** - Admin user accounts (enable API keys here for programmatic access; see [Payload REST & GraphQL](../api/payload-rest.md#api-keys))
 - **Media** - Uploaded files and images
 
 ### Configuration

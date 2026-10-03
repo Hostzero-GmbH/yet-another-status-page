@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getIncidentStatus } from '@/collections/Incidents'
 import { getCachedPayload, getSettings } from '@/lib/payload'
+import { computeOverallStatus, visibleMaintenanceWhere, type ServiceStatus } from '@/lib/status-data'
 import { getMediaUrl } from '@/lib/utils'
 import { Header } from '@/components/status/Header'
 import { Footer } from '@/components/status/Footer'
@@ -23,8 +24,6 @@ import {
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-type ServiceStatus = 'operational' | 'degraded' | 'partial' | 'major' | 'maintenance'
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
@@ -67,29 +66,9 @@ async function getStatusData() {
     pagination: false,
   })
 
-  const retentionHours = settings.maintenanceTerminalRetentionHours ?? 24
-  const cutoff = new Date(Date.now() - retentionHours * 3600 * 1000).toISOString()
-
   const maintenances = await payload.find({
     collection: 'maintenances',
-    where: {
-      or: [
-        { status: { equals: 'upcoming' } },
-        { status: { equals: 'in_progress' } },
-        {
-          and: [
-            { status: { equals: 'cancelled' } },
-            { cancelledAt: { greater_than: cutoff } },
-          ],
-        },
-        {
-          and: [
-            { status: { equals: 'completed' } },
-            { completedAt: { greater_than: cutoff } },
-          ],
-        },
-      ],
-    },
+    where: visibleMaintenanceWhere(settings),
     sort: 'scheduledStartAt',
     limit: 10,
   })
@@ -195,23 +174,7 @@ async function getStatusData() {
     })
   )
 
-  // Calculate overall status
-  const allStatuses = services.docs.map((s) => s.status || 'operational')
-  let overallStatus: ServiceStatus = 'operational'
-
-  if (allStatuses.some((s) => s === 'major')) {
-    overallStatus = 'major'
-  } else if (allStatuses.some((s) => s === 'partial')) {
-    overallStatus = 'partial'
-  } else if (allStatuses.some((s) => s === 'degraded')) {
-    overallStatus = 'degraded'
-  } else if (allStatuses.some((s) => s === 'maintenance')) {
-    overallStatus = 'maintenance'
-  }
-
-  if (settings.maintenanceModeEnabled) {
-    overallStatus = 'maintenance'
-  }
+  const overallStatus = computeOverallStatus(services.docs, settings)
 
   return {
     settings,

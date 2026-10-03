@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { publicRead, authenticatedOrTestWrite } from '@/lib/access'
+import { authenticatedOrTestWrite } from '@/lib/access'
 import { generateShortId } from '@/lib/shortId'
 
 export const subscriptionTypeOptions = [
@@ -25,7 +25,7 @@ export const Subscribers: CollectionConfig = {
     group: 'Notifications',
   },
   access: {
-    read: publicRead,
+    read: authenticatedOrTestWrite,
     create: () => true, // Public subscription
     update: authenticatedOrTestWrite,
     delete: authenticatedOrTestWrite,

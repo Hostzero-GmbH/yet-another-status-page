@@ -30,6 +30,11 @@ export function Footer({ footerText, timezone }: FooterProps) {
             <p className="text-xs text-muted-foreground/80">
               {formatTimezoneNotice(timezone || DEFAULT_TIMEZONE)}
             </p>
+            <nav aria-label="Machine-readable formats" className="flex gap-3 text-xs text-muted-foreground/80">
+              <a href="https://docs.yasp.io/api/public-api.html" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">API</a>
+              <a href="/feed.atom" type="application/atom+xml" className="hover:text-foreground">Atom feed</a>
+              <a href="/maintenances.ics" type="text/calendar" className="hover:text-foreground">Maintenance calendar</a>
+            </nav>
           </div>
           <a
             href="https://github.com/Hostzero-GmbH/yet-another-status-page"

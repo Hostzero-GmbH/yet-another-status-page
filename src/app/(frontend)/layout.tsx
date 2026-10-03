@@ -40,6 +40,12 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: settings.metaDescription || `Real-time status and incident updates for ${settings.siteName} services`,
     icons,
+    alternates: {
+      types: {
+        'application/atom+xml': '/feed.atom',
+        'text/calendar': '/maintenances.ics',
+      },
+    },
   }
 }
 
