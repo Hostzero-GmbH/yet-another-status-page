@@ -70,7 +70,9 @@ export interface Config {
     'service-groups': ServiceGroup;
     services: Service;
     incidents: Incident;
+    'incident-templates': IncidentTemplate;
     maintenances: Maintenance;
+    'maintenance-templates': MaintenanceTemplate;
     notifications: Notification;
     subscribers: Subscriber;
     users: User;
@@ -86,7 +88,9 @@ export interface Config {
     'service-groups': ServiceGroupsSelect<false> | ServiceGroupsSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     incidents: IncidentsSelect<false> | IncidentsSelect<true>;
+    'incident-templates': IncidentTemplatesSelect<false> | IncidentTemplatesSelect<true>;
     maintenances: MaintenancesSelect<false> | MaintenancesSelect<true>;
+    'maintenance-templates': MaintenanceTemplatesSelect<false> | MaintenanceTemplatesSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -202,6 +206,10 @@ export interface Incident {
    */
   title: string;
   /**
+   * Services affected by this incident
+   */
+  affectedServices?: (number | Service)[] | null;
+  /**
    * Auto-generated short ID for permalinks
    */
   shortId?: string | null;
@@ -213,10 +221,6 @@ export interface Incident {
    * When the incident was resolved
    */
   resolvedAt?: string | null;
-  /**
-   * Services affected by this incident
-   */
-  affectedServices?: (number | Service)[] | null;
   /**
    * Timeline of updates for this incident. At least one update is required.
    */
@@ -240,6 +244,47 @@ export interface Incident {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incident-templates".
+ */
+export interface IncidentTemplate {
+  id: number;
+  /**
+   * A short name to identify this template
+   */
+  name: string;
+  /**
+   * A brief description of the incident (e.g., "API Gateway Latency Issues")
+   */
+  title: string;
+  /**
+   * Services affected by this incident
+   */
+  affectedServices?: (number | Service)[] | null;
+  /**
+   * Optional timeline of updates to pre-fill
+   */
+  updates?:
+    | {
+        /**
+         * Status at the time of this update
+         */
+        status: 'investigating' | 'identified' | 'monitoring' | 'resolved';
+        /**
+         * Update message
+         */
+        message: string;
+        /**
+         * When this update was posted
+         */
+        createdAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "maintenances".
  */
 export interface Maintenance {
@@ -248,18 +293,6 @@ export interface Maintenance {
    * A brief description of the maintenance (e.g., "Database Migration")
    */
   title: string;
-  /**
-   * Auto-generated short ID for permalinks
-   */
-  shortId?: string | null;
-  /**
-   * When the maintenance was cancelled
-   */
-  cancelledAt?: string | null;
-  /**
-   * When the maintenance was completed
-   */
-  completedAt?: string | null;
   /**
    * Detailed description of the maintenance work
    */
@@ -283,21 +316,9 @@ export interface Maintenance {
    */
   affectedServices?: (number | Service)[] | null;
   /**
-   * When the maintenance is scheduled to start
-   */
-  scheduledStartAt: string;
-  /**
-   * When the maintenance is expected to end
-   */
-  scheduledEndAt?: string | null;
-  /**
    * Human-readable duration (e.g., "~2 hours")
    */
   duration?: string | null;
-  /**
-   * Derived from the latest entry in Updates, or auto-transitioned by schedule. Post an update to change status.
-   */
-  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
   /**
    * Automatically set to "In Progress" when start time is reached
    */
@@ -306,6 +327,30 @@ export interface Maintenance {
    * Automatically set to "Completed" when end time is reached
    */
   autoCompleteOnSchedule?: boolean | null;
+  /**
+   * Auto-generated short ID for permalinks
+   */
+  shortId?: string | null;
+  /**
+   * When the maintenance was cancelled
+   */
+  cancelledAt?: string | null;
+  /**
+   * When the maintenance was completed
+   */
+  completedAt?: string | null;
+  /**
+   * When the maintenance is scheduled to start
+   */
+  scheduledStartAt: string;
+  /**
+   * When the maintenance is expected to end
+   */
+  scheduledEndAt?: string | null;
+  /**
+   * Derived from the latest entry in Updates, or auto-transitioned by schedule. Post an update to change status.
+   */
+  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
   /**
    * Optional timeline of updates for this maintenance
    */
@@ -326,6 +371,61 @@ export interface Maintenance {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "maintenance-templates".
+ */
+export interface MaintenanceTemplate {
+  id: number;
+  /**
+   * A short name to identify this template
+   */
+  name: string;
+  /**
+   * A brief description of the maintenance (e.g., "Database Migration")
+   */
+  title: string;
+  /**
+   * Detailed description of the maintenance work
+   */
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Services that will be affected by this maintenance
+   */
+  affectedServices?: (number | Service)[] | null;
+  /**
+   * Human-readable duration (e.g., "~2 hours")
+   */
+  duration?: string | null;
+  /**
+   * Automatically set to "In Progress" when start time is reached
+   */
+  autoStartOnSchedule?: boolean | null;
+  /**
+   * Automatically set to "Completed" when end time is reached
+   */
+  autoCompleteOnSchedule?: boolean | null;
+  /**
+   * Initial status applied to the maintenance
+   */
+  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
   updatedAt: string;
   createdAt: string;
 }
@@ -582,8 +682,16 @@ export interface PayloadLockedDocument {
         value: number | Incident;
       } | null)
     | ({
+        relationTo: 'incident-templates';
+        value: number | IncidentTemplate;
+      } | null)
+    | ({
         relationTo: 'maintenances';
         value: number | Maintenance;
+      } | null)
+    | ({
+        relationTo: 'maintenance-templates';
+        value: number | MaintenanceTemplate;
       } | null)
     | ({
         relationTo: 'notifications';
@@ -675,9 +783,28 @@ export interface ServicesSelect<T extends boolean = true> {
  */
 export interface IncidentsSelect<T extends boolean = true> {
   title?: T;
+  affectedServices?: T;
   shortId?: T;
   status?: T;
   resolvedAt?: T;
+  updates?:
+    | T
+    | {
+        status?: T;
+        message?: T;
+        createdAt?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incident-templates_select".
+ */
+export interface IncidentTemplatesSelect<T extends boolean = true> {
+  name?: T;
+  title?: T;
   affectedServices?: T;
   updates?:
     | T
@@ -696,17 +823,17 @@ export interface IncidentsSelect<T extends boolean = true> {
  */
 export interface MaintenancesSelect<T extends boolean = true> {
   title?: T;
+  description?: T;
+  affectedServices?: T;
+  duration?: T;
+  autoStartOnSchedule?: T;
+  autoCompleteOnSchedule?: T;
   shortId?: T;
   cancelledAt?: T;
   completedAt?: T;
-  description?: T;
-  affectedServices?: T;
   scheduledStartAt?: T;
   scheduledEndAt?: T;
-  duration?: T;
   status?: T;
-  autoStartOnSchedule?: T;
-  autoCompleteOnSchedule?: T;
   updates?:
     | T
     | {
@@ -715,6 +842,22 @@ export interface MaintenancesSelect<T extends boolean = true> {
         createdAt?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "maintenance-templates_select".
+ */
+export interface MaintenanceTemplatesSelect<T extends boolean = true> {
+  name?: T;
+  title?: T;
+  description?: T;
+  affectedServices?: T;
+  duration?: T;
+  autoStartOnSchedule?: T;
+  autoCompleteOnSchedule?: T;
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }
